@@ -6,9 +6,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npx vite build",
     "build:server": "npx tsc",
-    "build:frontend": "vite build",
+    "build:frontend": "npx vite build",
     "preview": "vite preview",
     "server": "tsx server/server.ts",
     "start": "tsx server/server.ts"
