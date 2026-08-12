@@ -8,10 +8,10 @@ import {
   Recommendation,
   AllianceSettings,
   ImportSession
-} from "../types";
-import { getAggregatedPlayerSnapshot } from "../utils/analytics";
-import RosterFilterBar from "../components/Roster/RosterFilterBar";
-import RosterTable from "../components/Roster/RosterTable";
+} from "@/types";
+import { getAggregatedPlayerSnapshot } from "@/utils/analytics";
+import RosterFilterBar from "@/components/Roster/RosterFilterBar";
+import RosterTable from "@/components/Roster/RosterTable";
 
 interface RosterTabProps {
   players: Player[];
