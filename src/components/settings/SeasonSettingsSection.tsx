@@ -46,7 +46,7 @@ export default function SeasonSettingsSection({
           ].map((sn) => (
             <button
               key={sn.id}
-              onClick={() => setActiveSeason(sn.id as any)}
+              onClick={() => setActiveSeason(sn.id as "S1" | "S2" | "S3" | "SoS")}
               className={`p-2 rounded-lg text-xs font-mono font-semibold transition-all border cursor-pointer ${
                 activeSeason === sn.id
                   ? "bg-gothic-silver border-gothic-silver text-[#111113]"

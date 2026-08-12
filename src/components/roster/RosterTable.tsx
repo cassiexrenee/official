@@ -1,14 +1,14 @@
 import React from "react";
 import { ArrowUpDown, ArrowRight, CheckCircle } from "lucide-react";
-import { Snapshot, PerformanceTier } from "../../types";
+import { Snapshot, PerformanceTier, PerformanceEvaluation, Recommendation } from "../../types";
 import { getLastActivityInfo } from "../../utils/analytics";
 
 interface RosterTableProps {
   sortedRows: Array<{
     player: { characterId: string; currentName: string };
     snapshot: Snapshot | null;
-    evaluation: any;
-    recommendation: any;
+    evaluation: PerformanceEvaluation | null | undefined;
+    recommendation: Recommendation | null | undefined;
   }>;
   snapshots: Snapshot[];
   toggleSort: (field: "name" | "power" | "merits") => void;

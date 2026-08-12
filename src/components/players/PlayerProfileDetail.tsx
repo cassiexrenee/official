@@ -1,14 +1,19 @@
 import React, { useState } from "react";
 import { Activity, TrendingUp, FileText, Save, Trash2 } from "lucide-react";
 import { Player, Snapshot, PerformanceEvaluation, PerformanceTier, PlayerNote, AllianceSettings } from "../../types";
-import { formatWholeNumber } from "../../utils/analytics";
+
+// Explicit interface to replace the 'any' type
+interface PlayerLastActivity {
+  isInactive: boolean;
+  summary: string;
+}
 
 interface PlayerProfileDetailProps {
   activePlayer: Player;
   playerSnapshots: Snapshot[];
   latestSnapshot?: Snapshot;
   playerEvaluation?: PerformanceEvaluation;
-  playerLastActivity: any;
+  playerLastActivity: PlayerLastActivity;
   playerNotes: PlayerNote[];
   settings?: AllianceSettings;
   onAddNote: (playerId: string, content: string) => void;

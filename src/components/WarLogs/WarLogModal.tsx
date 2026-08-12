@@ -1,6 +1,8 @@
 import React from "react";
 import { Plus } from "lucide-react";
 
+type WarLogSeverity = "DIPLOMATIC" | "VANGUARD" | "CRITICAL" | "SYSTEM";
+
 interface WarLogModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -9,8 +11,8 @@ interface WarLogModalProps {
   setNewTitle: (v: string) => void;
   newActor: string;
   setNewActor: (v: string) => void;
-  newSeverity: "DIPLOMATIC" | "VANGUARD" | "CRITICAL" | "SYSTEM";
-  setNewSeverity: (v: any) => void;
+  newSeverity: WarLogSeverity;
+  setNewSeverity: (v: WarLogSeverity) => void;
   newZone: string;
   setNewZone: (v: string) => void;
   newCoords: string;
@@ -98,7 +100,7 @@ export default function WarLogModal({
               </label>
               <select
                 value={newSeverity}
-                onChange={(e) => setNewSeverity(e.target.value as any)}
+                onChange={(e) => setNewSeverity(e.target.value as WarLogSeverity)}
                 className="w-full bg-[#16181D] border border-[#4B5563]/40 rounded px-3 py-2 text-xs text-white focus:outline-none focus:border-[#D4B26A]"
               >
                 <option value="VANGUARD">VANGUARD (Combat Honor)</option>

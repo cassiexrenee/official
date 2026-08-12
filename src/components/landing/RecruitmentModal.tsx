@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, Send, Shield } from "lucide-react";
 
 interface RecruitmentModalProps {
@@ -21,6 +21,25 @@ export default function RecruitmentModal({ isOpen, onClose, onApplyForRecruitmen
   const [preferredRole, setPreferredRole] = useState("FIGHTER");
   const [submitted, setSubmitted] = useState(false);
 
+  // Safely handle the success timeout and cleanup if the user closes the modal early
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
+    if (submitted) {
+      timeoutId = setTimeout(() => {
+        setSubmitted(false);
+        setCharacterName("");
+        setPower("");
+        setMerits("");
+        onClose();
+      }, 1500);
+    }
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [submitted, onClose]);
+
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -36,13 +55,6 @@ export default function RecruitmentModal({ isOpen, onClose, onApplyForRecruitmen
     });
 
     setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      setCharacterName("");
-      setPower("");
-      setMerits("");
-      onClose();
-    }, 1500);
   };
 
   return (

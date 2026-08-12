@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
-  Database, FileSpreadsheet, FileText, FileCode, Plus, 
-  Trash2, ListFilter, AlertTriangle, AlertCircle 
+  Database, FileSpreadsheet, FileCode, Plus, 
+  Trash2, ListFilter, AlertCircle 
 } from "lucide-react";
 import { ImportSession, Snapshot } from "../../types";
 

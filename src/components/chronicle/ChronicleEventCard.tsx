@@ -1,20 +1,9 @@
 import React from 'react';
+import { WarLogEntry } from '../types'; // Adjust the import path as necessary based on your folder structure
 
-export interface TimelineEvent {
-  id: string;
-  timestamp: string;
-  title: string;
-  actor: string;
-  description: string;
-  severity: 'DIPLOMATIC' | 'VANGUARD' | 'CRITICAL' | 'SYSTEM';
-}
-
-export default function ChronicleEventCard({ event }: { event: TimelineEvent }) {
+export default function ChronicleEventCard({ event }: { event: WarLogEntry }) {
   return (
     <div className="flex gap-4 p-4 border border-gothic-silver/20 rounded-lg bg-gothic-velvet">
-      {/* Move the inner JSX from your current map function here. 
-        This keeps the badge logic (CRITICAL vs VANGUARD) isolated.
-      */}
       <div className="space-y-1">
         <h4 className="text-sm font-bold text-gothic-silver">{event.title}</h4>
         <p className="text-xs text-gothic-rose/60">{event.timestamp} • {event.actor}</p>
@@ -32,7 +21,7 @@ export default function ChronicleEventCard({ event }: { event: TimelineEvent }) 
             </span>
           )}
           {event.severity === 'DIPLOMATIC' && (
-            <span className="font-display text-[9px] tracking-widest text-gothic-bloom bg-gothic-bloom/10 border border-gothic-bloom/30 px-2 py-0.5 rounded uppercase font-semibold">
+            <span className="font-display text-[9px] tracking-widest text-emerald-400 bg-emerald-950/30 border border-emerald-500/30 px-2 py-0.5 rounded uppercase font-semibold">
               Council Pact
             </span>
           )}

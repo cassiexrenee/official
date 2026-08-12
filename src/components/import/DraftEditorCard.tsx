@@ -1,8 +1,15 @@
 import React, { useState } from "react";
-import { Trash2, Plus, AlertTriangle, Calendar, FileCode, FileSpreadsheet, FileText, ChevronUp, ChevronDown, Map, Check } from "lucide-react";
+import { Trash2, Plus, AlertTriangle, Calendar, FileCode, FileSpreadsheet, FileText, ChevronUp, ChevronDown, Map } from "lucide-react";
 import { Snapshot, ImportSession } from "../../types";
 import { FileDraft } from "../ImportTab";
-import { formatBytes, parseFarlightFilenameInfo, parseNumericValue } from "../../utils/importParsers";
+import { formatBytes, parseFarlightFilenameInfo } from "../../utils/importParsers";
+
+interface DuplicateDateInfo {
+  isDuplicate: boolean;
+  sanitizedDate: string;
+  matchingSessions: ImportSession[];
+  matchingSnapshotsCount: number;
+}
 
 interface DraftEditorCardProps {
   draft: FileDraft;
@@ -18,8 +25,8 @@ interface DraftEditorCardProps {
   toggleMappingExpansion: (draftId: string) => void;
   onDeleteDraft: (draftId: string) => void;
   onAddPlayerSubmit: (draftId: string, formValues: Partial<Snapshot>) => void;
-  getDuplicateDateInfo: (dateStr: string, currentDraftId?: string) => any;
-  onOpenDuplicateModal: (draftId: string, filename: string, date: string, matchingSessions: any[], count: number) => void;
+  getDuplicateDateInfo: (dateStr: string, currentDraftId?: string) => DuplicateDateInfo;
+  onOpenDuplicateModal: (draftId: string, filename: string, date: string, matchingSessions: ImportSession[], count: number) => void;
   onDeleteSession: (sessionId: string) => void;
   CANONICAL_FIELDS: Array<{ key: string; label: string }>;
 }
@@ -38,7 +45,6 @@ export default function DraftEditorCard({
   onAddPlayerSubmit,
   getDuplicateDateInfo,
   onOpenDuplicateModal,
-  onDeleteSession,
   CANONICAL_FIELDS
 }: DraftEditorCardProps) {
   const [showAllRows, setShowAllRows] = useState(false);
@@ -171,7 +177,7 @@ export default function DraftEditorCard({
                   <label className="text-[10px] uppercase font-bold text-gothic-rose/50 block">Platform Source</label>
                   <select
                     value={draft.source}
-                    onChange={(e) => onDraftSourceChange(draft.id, e.target.value as any)}
+                    onChange={(e) => onDraftSourceChange(draft.id, e.target.value as "DragonStats" | "Farlight" | "Manual")}
                     className="w-full bg-gothic-ink border border-gothic-silver/20 text-xs text-gothic-rose/90 p-2 rounded-lg outline-none cursor-pointer"
                   >
                     <option value="DragonStats">DragonStats</option>
