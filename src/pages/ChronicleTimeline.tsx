@@ -1,6 +1,6 @@
 import React from 'react';
-import ChronicleEventCard from '../components/Chronicle/ChronicleEventCard';
-import { WarLogEntry } from '../types'; // Adjust relative path if needed
+import ChronicleEventCard from '@/components/Chronicle/ChronicleEventCard';
+import { WarLogEntry } from '@/types'; // Updated to absolute path alias
 
 export default function ChronicleTimeline() {
   const events: WarLogEntry[] = [
