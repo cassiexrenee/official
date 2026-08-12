@@ -272,4 +272,12 @@ export default function App() {
               <OverviewTab
                 playersCount={players.length} latestSnapshots={activeSnapshots} snapshots={cumulativeSnapshots}
                 classifications={classifications} evaluations={evaluations} settings={settings} notes={notes}
-                overrides={overrides
+                overrides={overrides}
+              />
+            </div>
+          )}
+        </main>
+      </div>
+    </div>
+  );
+}
