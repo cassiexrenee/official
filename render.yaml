@@ -3,7 +3,7 @@ services:
     name: dragon-council-api
     runtime: node
     plan: free
-    buildCommand: npm install && npm run build:server
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
