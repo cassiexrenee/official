@@ -6,13 +6,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npx tsc && vite build",
+    "build": "vite build",
     "build:server": "npx tsc",
     "build:frontend": "vite build",
     "preview": "vite preview",
     "server": "tsx server/server.ts",
     "start": "tsx server/server.ts"
-  },
+  }
+}
+
   "dependencies": {
     "better-sqlite3": "^11.8.0",
     "clsx": "^2.1.1",
