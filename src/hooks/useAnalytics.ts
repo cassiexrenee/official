@@ -15,7 +15,7 @@ import {
   generateRecommendation,
   reconstructSnapshots,
   getAggregatedPlayerSnapshot
-} from "../utils/analytics";
+} from "@/utils/analytics";
 
 export function useAnalytics(
   players: Player[],
