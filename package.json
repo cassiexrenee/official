@@ -4,10 +4,11 @@
   "description": "Kingdom Intelligence & Roster Command Dashboard for Call of Dragons",
   "private": true,
   "type": "module",
+ {
   "scripts": {
     "dev": "vite",
-    "build": "./node_modules/.bin/tsc && vite build",
-    "build:server": "./node_modules/.bin/tsc",
+    "build": "npx tsc && vite build",
+    "build:server": "npx tsc",
     "build:frontend": "vite build",
     "preview": "vite preview",
     "server": "tsx server/server.ts",
