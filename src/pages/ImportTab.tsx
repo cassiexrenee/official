@@ -5,14 +5,14 @@ import {
   History as HistoryIcon 
 } from "lucide-react";
 import * as XLSX from "xlsx";
-import { Snapshot, Player, ImportSession } from "../types";
-import { CustomLoadingOverlay } from "./CustomLoadingBar";
-import SessionManager from "../components/import/SessionManager";
-import DraftEditorCard from "../components/Import/DraftEditorCard";
+import { Snapshot, Player, ImportSession } from "@/types";
+import { CustomLoadingOverlay } from "@/pages/CustomLoadingBar";
+import SessionManager from "@/components/import/SessionManager";
+import DraftEditorCard from "@/components/Import/DraftEditorCard";
 import { 
   CANONICAL_FIELDS, extractDateFromFilename, parseFarlightFilenameInfo, 
   sanitizeDateString, normalizeHeader, buildSnapshotsFromRaw, parseNumericValue 
-} from "../utils/importParsers";
+} from "@/utils/importParsers";
 
 interface ImportTabProps {
   importSessions: ImportSession[];
