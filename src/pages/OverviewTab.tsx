@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { LayoutDashboard } from "lucide-react";
 import { Player, Snapshot, PerformanceEvaluation, AllianceSettings } from "../types";
 import { apiFetch } from "../apiConfig";
-import OverviewMetricsGrid from "../components/Overview/OverviewMetricsGrid";
-import OverviewAIAdvisorCard from "../components/Overview/OverviewAIAdvisorCard";
-import OverviewQueueSummary from "../components/Overview/OverviewQueueSummary";
-import OverviewQueueList from "../components/Overview/OverviewQueueList";
+import OverviewMetricsGrid from "@/components/Overview/OverviewMetricsGrid";
+import OverviewAIAdvisorCard from "@/components/Overview/OverviewAIAdvisorCard";
+import OverviewQueueSummary from "@/components/Overview/OverviewQueueSummary";
+import OverviewQueueList from "@/components/Overview/OverviewQueueList";
 
 interface OverviewTabProps {
   players: Player[];
