@@ -1,5 +1,5 @@
 import React from 'react';
-import ChronicleEventCard from '@/components/Chronicle/ChronicleEventCard';
+import ChronicleEventCard from '@/components/chronicle/ChronicleEventCard';
 import { WarLogEntry } from '@/types'; // Updated to absolute path alias
 
 export default function ChronicleTimeline() {
