@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { Play, Sparkles, X, Shield } from "lucide-react";
+import { motion } from "motion/react";
+import { Play, Sparkles, X } from "lucide-react";
 import { CustomLoadingOverlay } from "./CustomLoadingBar";
 
 interface ShowcaseModalProps {

@@ -11,7 +11,7 @@ export function ChartContainer({ children, height = 300, className = '' }: Chart
   return (
     <div className={`w-full bg-gothic-ink/40 border border-gothic-silver/20 rounded-xl p-4 shadow-inner ${className}`} style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
-        {children as any}
+        {children}
       </ResponsiveContainer>
     </div>
   );

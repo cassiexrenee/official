@@ -1,15 +1,28 @@
 import React from "react";
 import { 
   Home, LayoutDashboard, UserSquare2, TableProperties, Scroll, 
-  Sliders, Compass, Menu, X, ChevronLeft, ChevronRight, Flame 
+  Sliders, Compass, Menu, X, ChevronLeft, ChevronRight 
 } from "lucide-react";
+
+interface CurrentUser {
+  id: string;
+  username: string;
+  email?: string;
+  avatarUrl?: string;
+}
+
+interface UserProfile {
+  rank: "R5" | "R4";
+  ingameName: string;
+  memberId: string;
+}
 
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  currentUser: any;
-  profile: any;
-  setProfile: (profile: any) => void;
+  currentUser: CurrentUser | null;
+  profile: UserProfile;
+  setProfile: (profile: UserProfile) => void;
   isMobileSidebarOpen: boolean;
   setIsMobileSidebarOpen: (isOpen: boolean) => void;
   isSidebarCollapsed: boolean;
