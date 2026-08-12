@@ -9,11 +9,11 @@ import {
   RoleOverride,
   AccountRole,
   AllianceSettings
-} from "../types";
-import { getAggregatedPlayerSnapshot, formatWholeNumber } from "../utils/analytics";
-import ReviewNeedsList from "../components/Review/ReviewNeedsList";
-import ReviewRecommendationsList from "../components/Review/ReviewRecommendationsList";
-import ReviewOverridesList from "../components/Review/ReviewOverridesList";
+} from "@/types";
+import { getAggregatedPlayerSnapshot, formatWholeNumber } from "@/utils/analytics";
+import ReviewNeedsList from "@/components/Review/ReviewNeedsList";
+import ReviewRecommendationsList from "@/components/Review/ReviewRecommendationsList";
+import ReviewOverridesList from "@/components/Review/ReviewOverridesList";
 
 interface ReviewTabProps {
   players: Player[];
