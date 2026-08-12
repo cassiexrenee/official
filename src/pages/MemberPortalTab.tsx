@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { UserCheck, Shield, Plus, Link as LinkIcon, Trash2, CheckCircle2 } from "lucide-react";
-import { Player, Snapshot, AllianceSettings } from "../types";
-import { apiFetch } from "../apiConfig";
+import { Player, Snapshot, AllianceSettings } from "@/types";
+import { apiFetch } from "@/apiConfig";
 
 interface MemberPortalTabProps {
   players: Player[];
