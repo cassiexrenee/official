@@ -1,6 +1,6 @@
 // Resolve API Base URL depending on environment
 export const API_BASE = (() => {
-  const envUrl = process.env.VITE_API_URL || (import.meta as any).env?.VITE_API_URL;
+  const envUrl = (typeof process !== "undefined" && process.env?.VITE_API_URL) || (import.meta as any).env?.VITE_API_URL;
   if (envUrl && envUrl !== "MY_API_URL" && envUrl.startsWith("http")) {
     return envUrl.replace(/\/$/, "");
   }

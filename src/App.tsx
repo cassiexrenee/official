@@ -6,7 +6,8 @@ import {
   PlayerNote, 
   RoleOverride,
   AccountRole,
-  ImportSession
+  ImportSession,
+  RecommendationStatus
 } from "./types";
 
 // Custom Hooks
@@ -29,7 +30,7 @@ import LandingTab from "./pages/LandingTab";
 import MemberPortalTab from "./pages/MemberPortalTab";
 import MigrationReconcilerTab from "./pages/MigrationReconcilerTab";
 
-import { AlertTriangle, Download, X } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
 const VALID_TABS = ["landing", "overview", "players", "member", "roster", "warlogs", "settings"];
 
@@ -47,13 +48,18 @@ function getDeepLinkParams(): { tab: string | null; player: string | null } {
   }
 }
 
+interface Applicant {
+  characterName: string;
+  power: number;
+  merits: number;
+  troopTier: string;
+}
+
 export default function App() {
   // Navigation State
   const deepLink = getDeepLinkParams();
   const [activeTab, setActiveTab] = useState<string>(deepLink.tab || "landing");
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(deepLink.player);
-  const [rosterSubView, setRosterSubView] = useState<"active" | "transitions">("active");
-  const [showImportModal, setShowImportModal] = useState(false);
 
   // User Authentication State
   const [currentUser, setCurrentUser] = useState<{
@@ -180,7 +186,7 @@ export default function App() {
   const handleRemoveOverride = (playerId: string) => setOverrides(overrides.filter((o) => o.playerId !== playerId));
 
   const handleResolveRecommendation = (recommendationId: string, decision: "ACCEPTED" | "REJECTED" | "OVERRIDDEN", reason: string) => {
-    setRecommendations(recommendations.map((r) => r.id === recommendationId ? { ...r, status: decision as any } : r));
+    setRecommendations(recommendations.map((r) => r.id === recommendationId ? { ...r, status: decision as RecommendationStatus } : r));
     const rec = recommendations.find(r => r.id === recommendationId);
     if (rec) handleAddNote(rec.playerId, `[Recommendation Resolved] ${decision}: ${reason}`);
   };
@@ -211,7 +217,7 @@ export default function App() {
     setPlayers(players.filter((p) => activePlayerIds.has(p.characterId)));
   };
 
-  const handleApplyForRecruitment = (applicant: any) => {
+  const handleApplyForRecruitment = (applicant: Applicant) => {
     const newCharacterId = `p_rec_${Date.now()}`;
     setPlayers([{ characterId: newCharacterId, currentName: applicant.characterName, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, ...players]);
     
@@ -275,6 +281,12 @@ export default function App() {
                 overrides={overrides}
               />
             </div>
+          )}
+          
+          {activeTab === "players" && (
+             <PlayersTab
+                selectedPlayerId={selectedPlayerId}
+             />
           )}
         </main>
       </div>
