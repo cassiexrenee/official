@@ -14,9 +14,9 @@ import {
   ArrowRight,
   Sparkles
 } from "lucide-react";
-import { WarLogEntry, Player } from "../types";
-import WarLogStatsSummary from "../components/WarLogs/WarLogStatsSummary";
-import WarLogModal from "../components/WarLogs/WarLogModal";
+import { WarLogEntry, Player } from "@/types";
+import WarLogStatsSummary from "@/components/WarLogs/WarLogStatsSummary";
+import WarLogModal from "@/components/WarLogs/WarLogModal";
 
 interface WarLogsTabProps {
   players: Player[];
