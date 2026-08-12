@@ -6,10 +6,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "./node_modules/.bin/tsc && vite build",
+    "build:server": "./node_modules/.bin/tsc",
+    "build:frontend": "vite build",
     "preview": "vite preview",
-    "server": "tsx server/server.ts"
+    "server": "tsx server/server.ts",
+    "start": "tsx server/server.ts"
   },
+
   "dependencies": {
     "clsx": "^2.1.1",
     "lucide-react": "^1.16.0",
