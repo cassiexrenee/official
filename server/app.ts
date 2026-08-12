@@ -9,7 +9,7 @@ import { aiRouter } from "./routes/ai";
 dotenv.config();
 
 export const app = express();
-
+export default app;
 // Middleware
 app.use(express.json());
 
