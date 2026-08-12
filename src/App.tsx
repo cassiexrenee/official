@@ -20,7 +20,7 @@ import Sidebar from "./components/Sidebar";
 
 // Tabs & Views
 import OverviewTab from "./pages/OverviewTab";
-import PlayersTab from "./pages/playerstab";
+import PlayersTab from "./pages/PlayersTab";
 import RosterTab from "./pages/RosterTab";
 import ReviewTab from "./pages/ReviewTab";
 import SettingsTab from "./pages/SettingsTab";
