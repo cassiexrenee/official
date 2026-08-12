@@ -1,8 +1,8 @@
 import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
-  Upload, Database, CheckCircle, X, AlertTriangle, 
-  History as HistoryIcon, FileCode, FileText, FileSpreadsheet 
+  Upload, Database, CheckCircle, X, 
+  History as HistoryIcon 
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Snapshot, Player, ImportSession } from "../types";
@@ -11,7 +11,7 @@ import SessionManager from "../components/import/SessionManager";
 import DraftEditorCard from "../components/Import/DraftEditorCard";
 import { 
   CANONICAL_FIELDS, extractDateFromFilename, parseFarlightFilenameInfo, 
-  sanitizeDateString, normalizeHeader, buildSnapshotsFromRaw 
+  sanitizeDateString, normalizeHeader, buildSnapshotsFromRaw, parseNumericValue 
 } from "../utils/importParsers";
 
 interface ImportTabProps {
@@ -52,8 +52,8 @@ export default function ImportTab({ importSessions, onImportSnapshots, onDeleteS
     draftId: string;
     filename: string;
     date: string;
-    matchingSessions: any[];
-    matchingOtherDrafts: any[];
+    matchingSessions: ImportSession[];
+    matchingOtherDrafts: FileDraft[];
     totalExistingRecords: number;
     newDateValue: string;
   } | null>(null);
@@ -73,7 +73,7 @@ export default function ImportTab({ importSessions, onImportSnapshots, onDeleteS
     };
   };
 
-  const createDraftFromFile = (filename: string, fileSize: number, fileType: "json" | "csv" | "excel", date: string, dateAutoDetected: boolean, source: any, rawRows: any[]) => {
+  const createDraftFromFile = (filename: string, fileSize: number, fileType: "json" | "csv" | "excel", date: string, dateAutoDetected: boolean, source: "DragonStats" | "Farlight" | "Manual", rawRows: any[]) => {
     if (rawRows.length === 0) return alert(`File "${filename}" contains no legible rows!`);
     
     const draftId = `draft_${Date.now()}`;
@@ -134,7 +134,7 @@ export default function ImportTab({ importSessions, onImportSnapshots, onDeleteS
     setDrafts((prev) => prev.map((d) => d.id === draftId ? { ...d, filename: newName } : d));
   };
 
-  const handleDraftSourceChange = (draftId: string, source: any) => {
+  const handleDraftSourceChange = (draftId: string, source: "DragonStats" | "Farlight" | "Manual") => {
     setDrafts((prev) => prev.map((d) => d.id === draftId ? { ...d, source } : d));
   };
 

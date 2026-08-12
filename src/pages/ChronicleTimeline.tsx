@@ -1,8 +1,9 @@
 import React from 'react';
-import ChronicleEventCard, { TimelineEvent } from '../components/Chronicle/ChronicleEventCard';
+import ChronicleEventCard from '../components/Chronicle/ChronicleEventCard';
+import { WarLogEntry } from '../types'; // Adjust relative path if needed
 
 export default function ChronicleTimeline() {
-  const events: TimelineEvent[] = [
+  const events: WarLogEntry[] = [
     // ... keep your array here
   ];
 

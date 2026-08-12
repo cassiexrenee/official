@@ -73,7 +73,12 @@ authRouter.get("/discord/callback", async (req, res) => {
       avatarUrl
     };
 
-    const sessionId = await createSession(user.id, user.username, user.avatarUrl);
+    // Fixed: Wrapped the three parameters into a single configuration object
+    const sessionId = await createSession({
+      discordId: user.id,
+      username: user.username,
+      avatarUrl: user.avatarUrl
+    });
 
     res.cookie("dc_session", sessionId, {
       httpOnly: true,
