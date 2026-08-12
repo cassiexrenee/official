@@ -19,12 +19,12 @@ import { apiFetch, API_BASE } from "./apiConfig";
 import Sidebar from "./components/Sidebar";
 
 // Tabs & Views
-import OverviewTab from "./components/OverviewTab";
+import OverviewTab from "./pages/OverviewTab";
 import PlayersTab from "./pages/PlayersTab";
 import RosterTab from "./pages/RosterTab";
 import ReviewTab from "./pages/ReviewTab";
 import SettingsTab from "./pages/SettingsTab";
-import ImportTab from "./components/ImportTab";
+import ImportTab from "./pages/ImportTab";
 import WarLogsTab from "./pages/WarLogsTab";
 import LandingTab from "./pages/LandingTab";
 import MemberPortalTab from "./pages/MemberPortalTab";
