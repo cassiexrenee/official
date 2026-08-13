@@ -68,3 +68,10 @@ export default function OverviewTab({
       />
 
       <OverviewAIAdvisorCard
+        aiBrief={aiBrief}
+        isGeneratingBrief={isGeneratingBrief}
+        onGenerateBrief={handleGenerateBrief}
+      />
+    </div>
+  );
+}
