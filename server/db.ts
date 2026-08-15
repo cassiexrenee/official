@@ -2,8 +2,7 @@ import pg from "pg";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
-
-let Database: any = null;
+import Database from "better-sqlite3";
 
 // ---------------------------------------------------------------------------
 // Hybrid Persistence Layer (Neon PostgreSQL + SQLite Fallback)
@@ -33,14 +32,11 @@ if (dbUrl) {
   }
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    Database = require("better-sqlite3");
+    sqliteDb = new Database(path.join(DATA_DIR, "dragon_council.db"));
+    sqliteDb.pragma("journal_mode = WAL");
   } catch (error) {
-    throw new Error("better-sqlite3 is required for SQLite fallback. Install it or set DATABASE_URL/NEON_DATABASE_URL/POSTGRES_URL.");
+    console.error("Failed to initialize SQLite database:", error);
   }
-
-  sqliteDb = new Database(path.join(DATA_DIR, "dragon_council.db"));
-  sqliteDb.pragma("journal_mode = WAL");
 }
 
 let initPromise: Promise<void> | null = null;

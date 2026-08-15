@@ -82,7 +82,8 @@ export default function PlayersTab({
             <p className="text-xs mt-1 font-mono">No alliance roster has been imported yet.</p>
             {onNavigateToTab && (
               <button
-                onClick={() => onNavigateToTab("imports")}
+                id="btn-players-go-import"
+                onClick={() => onNavigateToTab("import")}
                 className="px-4 py-2 bg-gothic-ink hover:bg-gothic-ink/80 text-gothic-silver border border-gothic-silver/20 hover:border-gothic-silver rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer"
               >
                 Go to Import Manager

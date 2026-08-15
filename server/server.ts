@@ -2,9 +2,17 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { app } from "./app";
+import { initDb } from "./db";
 
 async function startServer() {
-  const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+  const PORT = 3000;
+
+  try {
+    await initDb();
+    console.log("Database initialized successfully.");
+  } catch (err) {
+    console.warn("Database initialization deferred/warning:", err);
+  }
 
   // Vite middleware in development
   if (process.env.NODE_ENV !== "production") {

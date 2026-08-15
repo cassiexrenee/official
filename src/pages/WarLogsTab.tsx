@@ -12,21 +12,26 @@ import {
   Clock, 
   UserCheck, 
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Layers
 } from "lucide-react";
-import { WarLogEntry, Player } from "@/types";
+import { WarLogEntry, Player, MobilizationParticipantEntry } from "@/types";
 import WarLogStatsSummary from "@/components/WarLogs/WarLogStatsSummary";
 import WarLogModal from "@/components/WarLogs/WarLogModal";
+import MobilizationTrackerCard from "@/components/mobilization/MobilizationTrackerCard";
 
 interface WarLogsTabProps {
   players: Player[];
   onSelectPlayer?: (characterId: string) => void;
   onNavigateToTab?: (tab: string) => void;
+  defaultSubView?: "WAR_LOGS" | "MOBILIZATION";
 }
 
 export const initialWarLogs: WarLogEntry[] = [];
 
-export default function WarLogsTab({ players, onSelectPlayer, onNavigateToTab }: WarLogsTabProps) {
+export default function WarLogsTab({ players, onSelectPlayer, onNavigateToTab, defaultSubView = "WAR_LOGS" }: WarLogsTabProps) {
+  const [activeSubView, setActiveSubView] = useState<"WAR_LOGS" | "MOBILIZATION">(defaultSubView);
+
   const [logs, setLogs] = useState<WarLogEntry[]>(() => {
     try {
       const saved = localStorage.getItem("dragon_council_war_logs");
@@ -38,11 +43,51 @@ export default function WarLogsTab({ players, onSelectPlayer, onNavigateToTab }:
     return initialWarLogs;
   });
 
+  const [mobilizationEntries, setMobilizationEntries] = useState<MobilizationParticipantEntry[]>(() => {
+    try {
+      const saved = localStorage.getItem("dragon_council_mobilization");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (_) {}
+    return [];
+  });
+
   useEffect(() => {
     try {
       localStorage.setItem("dragon_council_war_logs", JSON.stringify(logs));
     } catch (_) {}
   }, [logs]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("dragon_council_mobilization", JSON.stringify(mobilizationEntries));
+    } catch (_) {}
+  }, [mobilizationEntries]);
+
+  const handleAddMobilizationEntry = (entry: MobilizationParticipantEntry) => {
+    setMobilizationEntries(prev => [entry, ...prev]);
+  };
+
+  const handleDeleteMobilizationEntry = (id: string) => {
+    if (confirm("Remove this participant mobilization score record?")) {
+      setMobilizationEntries(prev => prev.filter(e => e.id !== id));
+    }
+  };
+
+  const handleBulkPopulateFromRoster = () => {
+    if (players.length === 0) return;
+    const newEntries: MobilizationParticipantEntry[] = players.map(p => ({
+      id: `mob_${p.characterId}_${Date.now()}`,
+      playerId: p.characterId,
+      playerName: p.currentName,
+      personalScore: 0,
+      tasksSubmitted: 0,
+      recordedAt: new Date().toISOString()
+    }));
+    setMobilizationEntries(newEntries);
+  };
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSeverity, setSelectedSeverity] = useState<string>("ALL");
@@ -125,200 +170,250 @@ export default function WarLogsTab({ players, onSelectPlayer, onNavigateToTab }:
 
   return (
     <div className="space-y-6">
-      <WarLogStatsSummary
-        totalCount={totalCount}
-        vanguardCount={vanguardCount}
-        criticalCount={criticalCount}
-        diplomaticCount={diplomaticCount}
-        onOpenAddModal={() => setIsAddModalOpen(true)}
-      />
-
-      <div className="bg-[#222831] border border-[#4B5563]/30 rounded-lg p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-        <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8B96A5]" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search log title, commander name, or tactical details..."
-            className="w-full bg-[#16181D] border border-[#4B5563]/40 rounded-md pl-9 pr-4 py-2 text-xs text-[#F2F0E8] placeholder-[#8B96A5] focus:outline-none focus:border-[#D4B26A]"
-          />
-          {searchTerm && (
-            <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8B96A5] hover:text-white">
-              <X size={14} />
-            </button>
-          )}
+      {/* Sub-view Navigation Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gothic-silver/20 pb-4">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-mono text-[#D4B26A] uppercase tracking-wider mb-1">
+            <Scroll size={14} /> Alliance War Room & Events
+          </div>
+          <h1 className="text-2xl font-display font-bold text-gothic-silver tracking-tight">
+            {activeSubView === "WAR_LOGS" ? "Alliance Chronicle & War Ledger" : "Alliance Mobilization Tracker"}
+          </h1>
+          <p className="text-xs text-gothic-rose/70 font-mono mt-0.5">
+            {activeSubView === "WAR_LOGS" 
+              ? "Battle dispatches, diplomatic treaties, officer awards, and strategic war chronicles." 
+              : "Track individual Lord contribution scores, task completion rates, and alliance mobilization milestones."}
+          </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5 font-mono text-xs">
-          {[
-            { id: "ALL", label: "All Logs" },
-            { id: "VANGUARD", label: "Vanguard Honors" },
-            { id: "CRITICAL", label: "Hazards" },
-            { id: "DIPLOMATIC", label: "Pacts" },
-            { id: "SYSTEM", label: "System Ledger" }
-          ].map((type) => (
-            <button
-              key={type.id}
-              onClick={() => setSelectedSeverity(type.id)}
-              className={`px-3 py-1.5 rounded text-[11px] font-bold uppercase transition-all cursor-pointer ${
-                selectedSeverity === type.id
-                  ? "bg-[#D4B26A] text-[#16181D] border border-[#D4B26A] shadow-[0_0_10px_rgba(212,178,106,0.3)]"
-                  : "bg-[#16181D] text-[#C8CCD2]/70 border border-[#4B5563]/30 hover:text-white hover:bg-[#2F3743]"
-              }`}
-            >
-              {type.label}
-            </button>
-          ))}
+        <div className="flex items-center gap-2 bg-[#16181D] p-1 rounded-xl border border-gothic-silver/20 font-mono text-xs">
+          <button
+            id="subview-warlogs-btn"
+            onClick={() => setActiveSubView("WAR_LOGS")}
+            className={`px-3.5 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              activeSubView === "WAR_LOGS"
+                ? "bg-[#D4B26A] text-[#16181D] shadow-md font-bold"
+                : "text-gothic-silver hover:text-white"
+            }`}
+          >
+            <Sword size={14} />
+            War Chronicles
+          </button>
+          <button
+            id="subview-mobilization-btn"
+            onClick={() => setActiveSubView("MOBILIZATION")}
+            className={`px-3.5 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              activeSubView === "MOBILIZATION"
+                ? "bg-[#D4B26A] text-[#16181D] shadow-md font-bold"
+                : "text-gothic-silver hover:text-white"
+            }`}
+          >
+            <Award size={14} />
+            Mobilization Tracker
+          </button>
         </div>
-
-        <button
-          onClick={() => setSortOrder(sortOrder === "NEWEST" ? "OLDEST" : "NEWEST")}
-          className="flex items-center gap-1.5 bg-[#16181D] border border-[#4B5563]/30 px-3 py-2 rounded text-xs font-mono text-[#C8CCD2] hover:text-white cursor-pointer"
-        >
-          <Clock size={14} />
-          <span>{sortOrder === "NEWEST" ? "Newest First" : "Oldest First"}</span>
-        </button>
       </div>
 
-      <div className="bg-[#222831] border border-[#4B5563]/30 rounded-xl p-6 shadow-2xl relative overflow-hidden">
-        <div className="flex items-center justify-between border-b border-[#4B5563]/30 pb-4 mb-6 relative z-10">
-          <div className="flex items-center gap-2.5">
-            <Sparkles size={16} className="text-[#D4B26A]" />
-            <h3 className="font-display text-sm tracking-widest text-[#F2F0E8] uppercase font-bold">
-              Campaign Sequence ({filteredLogs.length} Records)
-            </h3>
-          </div>
-          <span className="font-mono text-[10px] text-[#8B96A5]">Immutable Operations Log</span>
-        </div>
+      {/* View Content */}
+      {activeSubView === "MOBILIZATION" ? (
+        <MobilizationTrackerCard
+          entries={mobilizationEntries}
+          players={players}
+          onAddEntry={handleAddMobilizationEntry}
+          onDeleteEntry={handleDeleteMobilizationEntry}
+          onBulkPopulateFromRoster={handleBulkPopulateFromRoster}
+        />
+      ) : (
+        <>
+          <WarLogStatsSummary
+            totalCount={totalCount}
+            vanguardCount={vanguardCount}
+            criticalCount={criticalCount}
+            diplomaticCount={diplomaticCount}
+            onOpenAddModal={() => setIsAddModalOpen(true)}
+          />
 
-        {filteredLogs.length === 0 ? (
-          <div className="p-12 text-center border border-dashed border-[#4B5563]/30 rounded-lg bg-[#16181D]/60">
-            <ShieldAlert size={36} className="mx-auto text-[#8B96A5] mb-3" />
-            <p className="font-display text-sm font-bold text-[#F2F0E8] uppercase tracking-wider mb-1">
-              {logs.length === 0 ? "No War Logs Recorded Yet" : "No Matching War Logs Found"}
-            </p>
-            {logs.length === 0 ? (
-              <button
-                onClick={() => setIsAddModalOpen(true)}
-                className="mt-3 px-4 py-2 bg-[#D4B26A] hover:bg-[#c3a159] text-[#16181D] rounded text-xs font-bold font-mono transition-all cursor-pointer"
-              >
-                Record First War Log
-              </button>
+          <div className="bg-[#222831] border border-[#4B5563]/30 rounded-lg p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+            <div className="relative flex-1">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8B96A5]" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search log title, commander name, or tactical details..."
+                className="w-full bg-[#16181D] border border-[#4B5563]/40 rounded-md pl-9 pr-4 py-2 text-xs text-[#F2F0E8] placeholder-[#8B96A5] focus:outline-none focus:border-[#D4B26A]"
+              />
+              {searchTerm && (
+                <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8B96A5] hover:text-white">
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-1.5 font-mono text-xs">
+              {[
+                { id: "ALL", label: "All Logs" },
+                { id: "VANGUARD", label: "Vanguard Honors" },
+                { id: "CRITICAL", label: "Hazards" },
+                { id: "DIPLOMATIC", label: "Pacts" },
+                { id: "SYSTEM", label: "System Ledger" }
+              ].map((type) => (
+                <button
+                  key={type.id}
+                  onClick={() => setSelectedSeverity(type.id)}
+                  className={`px-3 py-1.5 rounded text-[11px] font-bold uppercase transition-all cursor-pointer ${
+                    selectedSeverity === type.id
+                      ? "bg-[#D4B26A] text-[#16181D] border border-[#D4B26A] shadow-[0_0_10px_rgba(212,178,106,0.3)]"
+                      : "bg-[#16181D] text-[#C8CCD2]/70 border border-[#4B5563]/30 hover:text-white hover:bg-[#2F3743]"
+                  }`}
+                >
+                  {type.label}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setSortOrder(sortOrder === "NEWEST" ? "OLDEST" : "NEWEST")}
+              className="flex items-center gap-1.5 bg-[#16181D] border border-[#4B5563]/30 px-3 py-2 rounded text-xs font-mono text-[#C8CCD2] hover:text-white cursor-pointer"
+            >
+              <Clock size={14} />
+              <span>{sortOrder === "NEWEST" ? "Newest First" : "Oldest First"}</span>
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {filteredLogs.length === 0 ? (
+              <div className="bg-[#222831] border border-[#4B5563]/30 rounded-lg p-12 text-center">
+                <div className="max-w-md mx-auto space-y-3">
+                  <div className="w-12 h-12 rounded-full bg-[#16181D] border border-[#4B5563]/40 flex items-center justify-center mx-auto text-[#8B96A5]">
+                    <Scroll size={24} />
+                  </div>
+                  <h3 className="text-sm font-bold font-mono text-[#F2F0E8] uppercase tracking-wider">
+                    {searchTerm || selectedSeverity !== "ALL" ? "No Matching Chronicles Found" : "Alliance War Chronicle is Clear"}
+                  </h3>
+                  <p className="text-xs text-[#8B96A5]">
+                    {searchTerm || selectedSeverity !== "ALL"
+                      ? "Adjust search parameters or severity filter to view historical records."
+                      : "Record frontline battle reports, cross-realm diplomacy treaties, or honor rolls."}
+                  </p>
+                  <button
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="mt-4 px-4 py-2 bg-[#D4B26A] hover:bg-[#c4a159] text-[#16181D] rounded font-mono font-bold text-xs shadow-md transition-all cursor-pointer inline-flex items-center gap-1.5"
+                  >
+                    <Sword size={14} />
+                    Record First War Log
+                  </button>
+                </div>
+              </div>
             ) : (
-              <button
-                onClick={() => { setSearchTerm(""); setSelectedSeverity("ALL"); }}
-                className="mt-3 px-4 py-2 bg-[#2F3743] border border-[#D4B26A]/50 rounded text-xs font-mono text-[#D4B26A] hover:text-white transition-all cursor-pointer"
-              >
-                Reset Filters
-              </button>
+              <div className="grid grid-cols-1 gap-3">
+                {filteredLogs.map((log) => {
+                  const matchedPlayer = findMatchingPlayer(log.actor);
+
+                  return (
+                    <div
+                      key={log.id}
+                      className="bg-[#222831] border border-[#4B5563]/30 hover:border-[#D4B26A]/50 rounded-lg p-4 transition-all shadow-sm space-y-3 relative group"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#4B5563]/20 pb-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider border ${
+                              log.severity === "VANGUARD"
+                                ? "bg-amber-500/10 text-amber-300 border-amber-500/30"
+                                : log.severity === "CRITICAL"
+                                ? "bg-rose-500/10 text-rose-300 border-rose-500/30"
+                                : log.severity === "DIPLOMATIC"
+                                ? "bg-cyan-500/10 text-cyan-300 border-cyan-500/30"
+                                : "bg-slate-500/10 text-slate-300 border-slate-500/30"
+                            }`}
+                          >
+                            {log.severity}
+                          </span>
+                          <h4 className="text-sm font-bold font-mono text-[#F2F0E8]">{log.title}</h4>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <span className="text-[11px] font-mono text-[#8B96A5] flex items-center gap-1">
+                            <Clock size={12} />
+                            {log.timestamp}
+                          </span>
+                          <button
+                            onClick={() => handleDeleteLog(log.id)}
+                            className="text-[#8B96A5] hover:text-rose-400 transition-colors p-1 opacity-0 group-hover:opacity-100"
+                            title="Purge Log Record"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-[#C8CCD2]">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[#8B96A5]">Commander / Party:</span>
+                          <span className="font-bold text-[#F2F0E8]">{log.actor}</span>
+                          {matchedPlayer && onSelectPlayer && (
+                            <button
+                              onClick={() => {
+                                onSelectPlayer(matchedPlayer.characterId);
+                                if (onNavigateToTab) onNavigateToTab("players");
+                              }}
+                              className="text-[10px] text-[#D4B26A] hover:underline flex items-center gap-0.5 ml-1"
+                              title="View dossier in Member Registry"
+                            >
+                              <UserCheck size={11} />
+                              Dossier
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-[#C8CCD2]/90 leading-relaxed font-sans bg-[#16181D]/60 p-3 rounded border border-[#4B5563]/20">
+                        "{log.description}"
+                      </p>
+
+                      <div className="flex items-center justify-between text-[11px] font-mono text-[#8B96A5] pt-1">
+                        <div className="flex items-center gap-3">
+                          {log.zone && (
+                            <span className="flex items-center gap-1 text-[#7FA8C9]">
+                              <MapPin size={12} />
+                              {log.zone}
+                            </span>
+                          )}
+                          {log.locationCoordinates && (
+                            <span className="text-[#8B96A5] border-l border-[#4B5563]/30 pl-3">
+                              Grid: {log.locationCoordinates}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
-        ) : (
-          <div className="relative border-l-2 border-[#D4B26A]/40 ml-4 pl-6 space-y-8 relative z-10 my-2">
-            {filteredLogs.map((log) => {
-              const matchedPlayer = findMatchingPlayer(log.actor);
 
-              return (
-                <div key={log.id} className="relative group bg-[#16181D]/80 border border-[#4B5563]/30 hover:border-[#D4B26A]/60 p-5 rounded-lg transition-all shadow-lg">
-                  <div className={`absolute -left-[35px] top-5 w-5 h-5 rounded-full border-2 bg-[#16181D] flex items-center justify-center transition-transform group-hover:scale-125 ${
-                    log.severity === 'CRITICAL' ? 'border-[#B85A5A] text-[#B85A5A]' :
-                    log.severity === 'VANGUARD' ? 'border-[#7FA8C9] text-[#7FA8C9]' :
-                    log.severity === 'DIPLOMATIC' ? 'border-[#D9A441] text-[#D9A441]' : 'border-[#4B5563] text-[#C8CCD2]'
-                  }`}>
-                    {log.severity === 'CRITICAL' && <Skull size={10} />}
-                    {log.severity === 'VANGUARD' && <Sword size={10} />}
-                    {log.severity === 'DIPLOMATIC' && <Award size={10} />}
-                    {log.severity === 'SYSTEM' && <Scroll size={10} />}
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 border-b border-[#4B5563]/20 pb-3 mb-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="font-display text-lg font-bold tracking-wide text-[#F2F0E8]">{log.title}</h4>
-                        <span className="font-display text-[9px] tracking-widest px-2 py-0.5 rounded uppercase font-semibold bg-[#2F3743] border border-[#4B5563]/50 text-[#C8CCD2]">
-                          {log.severity}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2 text-xs text-[#C8CCD2] pt-0.5">
-                        <span>Led by</span>
-                        <span className="font-semibold text-[#F2F0E8] bg-[#2F3743] px-2 py-0.5 rounded border border-[#4B5563]/30 flex items-center gap-1.5">
-                          <UserCheck size={12} className="text-[#D4B26A]" />
-                          {log.actor}
-                        </span>
-
-                        {matchedPlayer && onSelectPlayer && onNavigateToTab && (
-                          <button
-                            onClick={() => {
-                              onSelectPlayer(matchedPlayer.characterId);
-                              onNavigateToTab("players");
-                            }}
-                            className="text-[10px] text-[#D4B26A] hover:text-white font-mono bg-[#D4B26A]/15 hover:bg-[#D4B26A]/30 px-2 py-0.5 rounded border border-[#D4B26A]/40 transition-all flex items-center gap-1 cursor-pointer"
-                          >
-                            <span>Profile</span>
-                            <ArrowRight size={10} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 self-end sm:self-start">
-                      <time className="font-mono text-xs italic text-[#8B96A5] bg-[#16181D] px-2.5 py-1 rounded border border-[#4B5563]/30 whitespace-nowrap">
-                        {log.timestamp}
-                      </time>
-                      <button
-                        onClick={() => handleDeleteLog(log.id)}
-                        className="text-[#8B96A5] hover:text-[#B85A5A] transition-colors p-1 cursor-pointer"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-
-                  <p className="text-sm text-[#F2F0E8]/90 leading-relaxed bg-[#16181D]/60 p-3 rounded border border-[#4B5563]/20 italic mb-3">
-                    "{log.description}"
-                  </p>
-
-                  <div className="flex items-center justify-between text-[11px] font-mono text-[#8B96A5] pt-1">
-                    <div className="flex items-center gap-3">
-                      {log.zone && (
-                        <span className="flex items-center gap-1 text-[#7FA8C9]">
-                          <MapPin size={12} />
-                          {log.zone}
-                        </span>
-                      )}
-                      {log.locationCoordinates && (
-                        <span className="text-[#8B96A5] border-l border-[#4B5563]/30 pl-3">
-                          Grid: {log.locationCoordinates}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      <WarLogModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onSubmit={handleAddLog}
-        newTitle={newTitle}
-        setNewTitle={setNewTitle}
-        newActor={newActor}
-        setNewActor={setNewActor}
-        newSeverity={newSeverity}
-        setNewSeverity={setNewSeverity}
-        newZone={newZone}
-        setNewZone={setNewZone}
-        newCoords={newCoords}
-        setNewCoords={setNewCoords}
-        newDescription={newDescription}
-        setNewDescription={setNewDescription}
-      />
+          <WarLogModal
+            isOpen={isAddModalOpen}
+            onClose={() => setIsAddModalOpen(false)}
+            onSubmit={handleAddLog}
+            newTitle={newTitle}
+            setNewTitle={setNewTitle}
+            newActor={newActor}
+            setNewActor={setNewActor}
+            newSeverity={newSeverity}
+            setNewSeverity={setNewSeverity}
+            newZone={newZone}
+            setNewZone={setNewZone}
+            newCoords={newCoords}
+            setNewCoords={setNewCoords}
+            newDescription={newDescription}
+            setNewDescription={setNewDescription}
+          />
+        </>
+      )}
     </div>
   );
 }
+

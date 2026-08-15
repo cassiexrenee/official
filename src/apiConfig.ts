@@ -4,11 +4,7 @@ export const API_BASE = (() => {
   if (envUrl && envUrl !== "MY_API_URL" && envUrl.startsWith("http")) {
     return envUrl.replace(/\/$/, "");
   }
-  // Fallback to relative path if served from same origin, or default localhost port for local dev
-  if (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
-    return "";
-  }
-  return "http://localhost:3001";
+  return "";
 })();
 
 /**

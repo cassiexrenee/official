@@ -339,3 +339,13 @@ export interface AllianceSettings {
   };
   updatedAt: string;
 }
+
+export interface MobilizationParticipantEntry {
+  id: string;
+  playerId: string;
+  playerName: string;
+  personalScore: number;
+  tasksSubmitted: number;
+  tier?: string;
+  recordedAt?: string;
+}

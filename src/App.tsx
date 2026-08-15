@@ -32,7 +32,7 @@ import MigrationReconcilerTab from "./pages/MigrationReconcilerTab";
 
 import { AlertTriangle } from "lucide-react";
 
-const VALID_TABS = ["landing", "overview", "players", "member", "roster", "review", "warlogs", "settings"];
+const VALID_TABS = ["landing", "overview", "players", "member", "roster", "import", "imports", "review", "warlogs", "mobilization", "settings"];
 
 function getDeepLinkParams(): { tab: string | null; player: string | null } {
   try {
@@ -217,6 +217,10 @@ export default function App() {
     setPlayers(players.filter((p) => activePlayerIds.has(p.characterId)));
   };
 
+  const handleRenameSession = (sessionId: string, newFilename: string) => {
+    setImportSessions((prev) => prev.map((s) => s.id === sessionId ? { ...s, filename: newFilename } : s));
+  };
+
   const handleApplyForRecruitment = (applicant: Applicant) => {
     const newCharacterId = `p_rec_${Date.now()}`;
     setPlayers([{ characterId: newCharacterId, currentName: applicant.characterName, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, ...players]);
@@ -317,6 +321,16 @@ export default function App() {
             />
           )}
 
+          {(activeTab === "import" || activeTab === "imports") && (
+            <ImportTab
+              importSessions={importSessions}
+              onImportSnapshots={handleImportSnapshots}
+              onDeleteSession={handleDeleteSession}
+              onRenameSession={handleRenameSession}
+              snapshots={snapshots}
+            />
+          )}
+
           {activeTab === "review" && (
             <ReviewTab
               players={players}
@@ -334,11 +348,12 @@ export default function App() {
             />
           )}
 
-          {activeTab === "warlogs" && (
+          {(activeTab === "warlogs" || activeTab === "mobilization") && (
             <WarLogsTab
               players={players}
               onSelectPlayer={(id) => { setSelectedPlayerId(id); setActiveTab("players"); }}
               onNavigateToTab={setActiveTab}
+              defaultSubView={activeTab === "mobilization" ? "MOBILIZATION" : "WAR_LOGS"}
             />
           )}
 

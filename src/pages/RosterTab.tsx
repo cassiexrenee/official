@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Download, Users } from "lucide-react";
+import { Download, Users, Upload } from "lucide-react";
 import { 
   Player, 
   Snapshot, 
@@ -141,13 +141,25 @@ export default function RosterTab({
           </p>
         </div>
 
-        <button
-          onClick={handleDownloadCSV}
-          className="px-4 py-2 bg-gothic-ink hover:bg-gothic-ink/80 text-gothic-silver border border-gothic-silver/20 hover:border-gothic-silver rounded-lg text-xs font-mono font-semibold transition-all flex items-center gap-2 cursor-pointer"
-        >
-          <Download size={13} />
-          Export Roster CSV
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            id="btn-open-import-manager"
+            onClick={() => onNavigateToTab("import")}
+            className="px-4 py-2 bg-[#D4B26A]/20 hover:bg-[#D4B26A]/30 text-[#D4B26A] border border-[#D4B26A]/50 hover:border-[#D4B26A] rounded-lg text-xs font-mono font-bold transition-all flex items-center gap-2 cursor-pointer shadow-[0_0_10px_rgba(212,178,106,0.15)]"
+          >
+            <Upload size={13} />
+            Import Manager
+          </button>
+
+          <button
+            id="btn-export-roster-csv"
+            onClick={handleDownloadCSV}
+            className="px-4 py-2 bg-gothic-ink hover:bg-gothic-ink/80 text-gothic-silver border border-gothic-silver/20 hover:border-gothic-silver rounded-lg text-xs font-mono font-semibold transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <Download size={13} />
+            Export Roster CSV
+          </button>
+        </div>
       </div>
 
       <RosterFilterBar

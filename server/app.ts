@@ -4,20 +4,21 @@ import dotenv from "dotenv";
 import { authRouter } from "./routes/auth";
 import { stateRouter } from "./routes/state";
 import { rosterRouter } from "./routes/roster";
-import { aiRouter } from "./routes/ai";
+import { mobilizationRouter } from "./routes/mobilization";
 
 dotenv.config();
 
 export const app = express();
 
 // Middleware
-app.use(express.json());
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 // Apply Routers
 app.use("/api/auth", authRouter);
 app.use("/api/state", stateRouter);
 app.use("/api/roster", rosterRouter); // Use for both /claims and /farms
-app.use("/api/ai", aiRouter);
+app.use("/api/mobilization", mobilizationRouter);
 
 // Basic health check endpoint
 app.get("/api/health", (req, res) => {
