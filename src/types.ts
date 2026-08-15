@@ -1,36 +1,39 @@
-export type AccountRole = "FIGHTER" | "SUPPORT" | "FARM" | "INACTIVE" | "NEEDS_REVIEW";
+export type AccountRole = "FIGHTER" | "SUPPORT" | "FARM" | "NEEDS_REVIEW" | "INACTIVE";
 
 export type ClassificationStatus = "AUTO_CLASSIFIED" | "MANUAL_OVERRIDE" | "NEEDS_REVIEW" | "INSUFFICIENT_DATA";
 
 export type PerformanceTier = "EXCEEDS" | "MEETS" | "BELOW" | "INACTIVE";
 
-export type EligibilityStatus = "ELIGIBLE" | "BELOW_BASELINE" | "LIKELY_FARM" | "LIKELY_INACTIVE";
+export type EligibilityStatus = "ELIGIBLE" | "BELOW_BASELINE" | "LIKELY_FARM" | "LIKELY_INACTIVE" | "INELIGIBLE" | "PENDING";
 
-export type ComplianceStatus = "EXEMPLARY" | "COMPLIANT" | "PARTIALLY_COMPLIANT" | "NON_COMPLIANT" | "NOT_APPLICABLE";
+export type ComplianceStatus = "EXEMPLARY" | "COMPLIANT" | "PARTIALLY_COMPLIANT" | "NON_COMPLIANT" | "NOT_APPLICABLE" | "PARTIAL";
 
-export type ActivityState = "ACTIVE" | "LOW_ACTIVITY" | "INACTIVE" | "UNKNOWN";
+export type ActivityState = "ACTIVE" | "LOW_ACTIVITY" | "INACTIVE" | "UNKNOWN" | "AT_RISK";
 
-export type EvaluationResultStatus = "MEETS_REQUIREMENTS" | "EXCEEDS_EXPECTATIONS" | "BELOW_REQUIREMENTS" | "NEEDS_REVIEW" | "NOT_APPLICABLE";
+export type EvaluationResultStatus = "MEETS_REQUIREMENTS" | "EXCEEDS_EXPECTATIONS" | "BELOW_REQUIREMENTS" | "NEEDS_REVIEW" | "NOT_APPLICABLE" | "EXCEEDS_EXPECTATIONS" | "MEETS_EXPECTATIONS" | "BELOW_EXPECTATIONS";
 
 export type RecommendationStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "OVERRIDDEN";
 
 export type RecommendationType = "KEEP" | "SUPPORT" | "MONITOR" | "KEEP_AS_FARM" | "REMOVE" | "MANUAL_REVIEW";
 
 export interface RoleRequirementItem {
-  id: string;
+  id?: string;
   label: string;
   passed: boolean;
-  actual: string;
-  required: string;
+  actual?: string;
+  required?: string;
   detail?: string;
 }
 
 export interface ActivityEvidenceItem {
-  id: string;
-  category: string;
+  id?: string;
+  category?: string;
   label: string;
-  present: boolean;
-  actualValue: string;
+  present?: boolean;
+  actualValue?: string;
+  metric?: string;
+  value?: number | string;
+  status?: string;
 }
 
 export interface CohortPercentiles {
@@ -45,6 +48,9 @@ export interface CohortPercentiles {
   pBehemoths: number;
   pBuildTime: number;
   pDestructionTime: number;
+  p50?: number;
+  p75?: number;
+  p90?: number;
 }
 
 export interface Player {
@@ -65,7 +71,7 @@ export interface PlayerNameHistory {
 export interface Snapshot {
   id: string;
   playerId: string;
-  playerName: string; // convenience to avoid joining inside components
+  playerName: string;
   allianceId: string;
   allianceTag?: string;
   importId: string;
@@ -89,10 +95,11 @@ export interface Snapshot {
 export interface PlayerClassification {
   id: string;
   playerId: string;
-  snapshotId: string | null;
+  snapshotId?: string | null;
   role: AccountRole;
-  confidenceScore: number;
-  status: ClassificationStatus;
+  confidence?: number;
+  confidenceScore?: number;
+  status?: ClassificationStatus;
   evidence: {
     fighter: number;
     support: number;
@@ -103,14 +110,15 @@ export interface PlayerClassification {
     summary: string;
     evidence: string[];
   };
-  evaluatedAt: string;
+  evaluatedAt?: string;
+  createdAt?: string;
 }
 
 export interface PerformanceEvaluation {
   id: string;
   playerId: string;
-  classificationId: string;
-  snapshotId: string | null;
+  classificationId?: string;
+  snapshotId?: string | null;
   activityState?: ActivityState;
   evaluationResult?: EvaluationResultStatus;
   roleRequirementsChecklist?: RoleRequirementItem[];
@@ -131,7 +139,8 @@ export interface PerformanceEvaluation {
     positives: string[];
     negatives: string[];
   };
-  evaluatedAt: string;
+  evaluatedAt?: string;
+  createdAt?: string;
   customScores?: {
     deaths: number;
     merits: number;
@@ -162,6 +171,11 @@ export interface PerformanceEvaluation {
     activityVal: string;
     activityReq: string;
   };
+  metrics?: {
+    powerScore: number;
+    meritScore: number;
+    activityScore: number;
+  };
 }
 
 export interface RoleOverride {
@@ -187,7 +201,7 @@ export interface Recommendation {
   id: string;
   playerId: string;
   classificationId: string;
-  evaluationId: string;
+  evaluationId?: string;
   recommendation: RecommendationType;
   reason: {
     summary: string;
@@ -218,9 +232,21 @@ export interface ImportSession {
   source: "DragonStats" | "Farlight" | "Manual";
 }
 
+export interface WarLogEntry {
+  id: string;
+  timestamp: string;
+  title: string;
+  actor: string;
+  description: string;
+  severity: "DIPLOMATIC" | "VANGUARD" | "CRITICAL" | "SYSTEM";
+  zone?: string;
+  locationCoordinates?: string;
+  recordedBy?: string;
+}
+
 export interface AllianceSettings {
   allianceId: string;
-  activeProfile: "CASUAL" | "STANDARD" | "HARDCORE" | "CUSTOM";
+  activeProfile: "CASUAL" | "STANDARD" | "HARDCORE" | "CUSTOM" | string;
   configuration: {
     weights: {
       FIGHTER: { combat: number; contribution: number; activity: number };
@@ -230,8 +256,8 @@ export interface AllianceSettings {
       NEEDS_REVIEW: { combat: number; contribution: number; activity: number };
     };
     thresholds: {
-      below: number; // e.g. 45
-      meets: number; // e.g. 75
+      below: number;
+      meets: number;
     };
     seasonalPowerBaselines: {
       S1: number;
@@ -247,30 +273,30 @@ export interface AllianceSettings {
     roleRequirements?: {
       FIGHTER?: {
         minPower?: number;
-        minMeritsPct?: number; // e.g., 10 (%)
-        minDeaths?: number; // e.g., 50000
-        minBehemothWins?: number; // e.g., 5
+        minMeritsPct?: number;
+        minDeaths?: number;
+        minBehemothWins?: number;
         requireActivity?: boolean;
       };
       SUPPORT?: {
         minPower?: number;
-        minMeritsPct?: number; // e.g., 5 (%)
-        minBehemothWins?: number; // e.g., 5
-        minDonations?: number; // e.g., 50000
-        minAllianceHelp?: number; // e.g., 500
+        minMeritsPct?: number;
+        minBehemothWins?: number;
+        minDonations?: number;
+        minAllianceHelp?: number;
         requireActivity?: boolean;
       };
       FARM?: {
-        minGathering?: number; // e.g. 50000000
-        minResourceAssistance?: number; // e.g. 5000000
-        minAllianceHelp?: number; // e.g. 200
+        minGathering?: number;
+        minResourceAssistance?: number;
+        minAllianceHelp?: number;
         requireActivity?: boolean;
       };
     };
-    complianceTargets?: {
-      meritRatioPct?: number; // e.g. 10 (%)
-      deathsMin?: number; // e.g. 50000
-      activityRequired?: boolean; // default true
+    complianceTargets: {
+      meritRatioPct: number;
+      deathsMin: number;
+      activityRequired: boolean;
     };
     discordWebhookUrl?: string;
     customScoringWeights?: {
@@ -312,16 +338,4 @@ export interface AllianceSettings {
     };
   };
   updatedAt: string;
-}
-
-export interface WarLogEntry {
-  id: string;
-  timestamp: string;
-  title: string;
-  actor: string;
-  description: string;
-  severity: "DIPLOMATIC" | "VANGUARD" | "CRITICAL" | "SYSTEM";
-  zone?: string;
-  locationCoordinates?: string;
-  recordedBy?: string;
 }
