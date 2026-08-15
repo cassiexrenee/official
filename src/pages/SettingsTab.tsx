@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Save, CheckCircle, TrendingUp } from "lucide-react";
 import { AllianceSettings } from "@/types";
-import ThemeSettingsSection from "@/components/Settings/ThemeSettingsSection";
-import SeasonSettingsSection from "@/components/Settings/SeasonSettingsSection";
+import ThemeSettingsSection from "@/components/settings/ThemeSettingsSection";
+import SeasonSettingsSection from "@/components/settings/SeasonSettingsSection";
 
 export interface ThemeOption {
   id: "slate" | "obsidian" | "sepia" | string;
@@ -130,7 +130,7 @@ export default function SettingsTab({
       <div className="lg:col-span-1 space-y-6">
         <ThemeSettingsSection
           themeOptions={THEME_OPTIONS}
-          activeTheme={activeTheme}
+          activeTheme={currentTheme}
           onUpdateTheme={onUpdateTheme || (() => {})}
           setCurrentTheme={setCurrentTheme}
         />

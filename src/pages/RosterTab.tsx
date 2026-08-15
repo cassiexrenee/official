@@ -10,8 +10,8 @@ import {
   ImportSession
 } from "@/types";
 import { getAggregatedPlayerSnapshot } from "@/utils/analytics";
-import RosterFilterBar from "@/components/Roster/RosterFilterBar";
-import RosterTable from "@/components/Roster/RosterTable";
+import RosterFilterBar from "@/components/roster/RosterFilterBar";
+import RosterTable from "@/components/roster/RosterTable";
 
 interface RosterTabProps {
   players: Player[];

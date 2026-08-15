@@ -1,5 +1,5 @@
 import React from 'react';
-import { WarLogEntry } from '../types'; // Adjust the import path as necessary based on your folder structure
+import { WarLogEntry } from '@/types';
 
 export default function ChronicleEventCard({ event }: { event: WarLogEntry }) {
   return (

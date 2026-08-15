@@ -6,9 +6,9 @@ import {
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Snapshot, Player, ImportSession } from "@/types";
-import { CustomLoadingOverlay } from "@/pages/CustomLoadingBar";
+import { CustomLoadingOverlay } from "@/components/CustomLoadingBar";
 import SessionManager from "@/components/import/SessionManager";
-import DraftEditorCard from "@/components/Import/DraftEditorCard";
+import DraftEditorCard from "@/components/import/DraftEditorCard";
 import { 
   CANONICAL_FIELDS, extractDateFromFilename, parseFarlightFilenameInfo, 
   sanitizeDateString, normalizeHeader, buildSnapshotsFromRaw, parseNumericValue 

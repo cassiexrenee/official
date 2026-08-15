@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Trash2, Plus, AlertTriangle, Calendar, FileCode, FileSpreadsheet, FileText, ChevronUp, ChevronDown, Map } from "lucide-react";
 import { Snapshot, ImportSession } from "../../types";
-import { FileDraft } from "../ImportTab";
+import { FileDraft } from "../../pages/ImportTab";
 import { formatBytes, parseFarlightFilenameInfo } from "../../utils/importParsers";
 
 interface DuplicateDateInfo {
