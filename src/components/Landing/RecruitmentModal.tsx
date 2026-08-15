@@ -9,7 +9,6 @@ interface RecruitmentModalProps {
     power: number;
     merits: number;
     troopTier: string;
-    preferredRole: string;
   }) => void;
 }
 
@@ -18,7 +17,6 @@ export default function RecruitmentModal({ isOpen, onClose, onApplyForRecruitmen
   const [power, setPower] = useState<string>("");
   const [merits, setMerits] = useState<string>("");
   const [troopTier, setTroopTier] = useState("T5");
-  const [preferredRole, setPreferredRole] = useState("FIGHTER");
   const [submitted, setSubmitted] = useState(false);
 
   // Safely handle the success timeout and cleanup if the user closes the modal early
@@ -50,8 +48,7 @@ export default function RecruitmentModal({ isOpen, onClose, onApplyForRecruitmen
       characterName: characterName.trim(),
       power: Number(power) || 0,
       merits: Number(merits) || 0,
-      troopTier,
-      preferredRole
+      troopTier
     });
 
     setSubmitted(true);
@@ -112,30 +109,16 @@ export default function RecruitmentModal({ isOpen, onClose, onApplyForRecruitmen
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase font-bold text-gothic-rose/60 block">Highest Troop Tier</label>
-                <select
-                  value={troopTier}
-                  onChange={(e) => setTroopTier(e.target.value)}
-                  className="w-full bg-gothic-ink border border-gothic-silver/20 text-gothic-silver p-2.5 rounded-lg outline-none cursor-pointer"
-                >
-                  <option value="T5">Tier 5 (T5)</option>
-                  <option value="T4">Tier 4 (T4)</option>
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase font-bold text-gothic-rose/60 block">Preferred Role</label>
-                <select
-                  value={preferredRole}
-                  onChange={(e) => setPreferredRole(e.target.value)}
-                  className="w-full bg-gothic-ink border border-gothic-silver/20 text-gothic-silver p-2.5 rounded-lg outline-none cursor-pointer"
-                >
-                  <option value="FIGHTER">Fighter (Combat)</option>
-                  <option value="SUPPORT">Support (Garrison/Behemoth)</option>
-                  <option value="FARM">Farm Account</option>
-                </select>
-              </div>
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase font-bold text-gothic-rose/60 block">Highest Troop Tier</label>
+              <select
+                value={troopTier}
+                onChange={(e) => setTroopTier(e.target.value)}
+                className="w-full bg-gothic-ink border border-gothic-silver/20 text-gothic-silver p-2.5 rounded-lg outline-none cursor-pointer"
+              >
+                <option value="T5">Tier 5 (T5)</option>
+                <option value="T4">Tier 4 (T4)</option>
+              </select>
             </div>
 
             <div className="flex justify-end gap-2 pt-3 border-t border-gothic-silver/20">

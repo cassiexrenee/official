@@ -32,7 +32,7 @@ import MigrationReconcilerTab from "./pages/MigrationReconcilerTab";
 
 import { AlertTriangle } from "lucide-react";
 
-const VALID_TABS = ["landing", "overview", "players", "member", "roster", "warlogs", "settings"];
+const VALID_TABS = ["landing", "overview", "players", "member", "roster", "review", "warlogs", "settings"];
 
 function getDeepLinkParams(): { tab: string | null; player: string | null } {
   try {
@@ -53,7 +53,6 @@ interface Applicant {
   power: number;
   merits: number;
   troopTier: string;
-  preferredRole: string;
 }
 
 export default function App() {
@@ -219,29 +218,18 @@ export default function App() {
   };
 
   const handleApplyForRecruitment = (applicant: Applicant) => {
-  const newCharacterId = `p_rec_${Date.now()}`;
-  setPlayers([{ characterId: newCharacterId, currentName: applicant.characterName, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, ...players]);
-  
-  setSnapshots([{
-    id: `snap_${Date.now()}`, playerId: newCharacterId, playerName: applicant.characterName, allianceId: settings.allianceId, importId: "import_portal",
-    currentPower: applicant.power, highestPower: applicant.power, merits: applicant.merits,
-    t4Deaths: applicant.troopTier === "T5" ? 20000 : 10000, t5Deaths: applicant.troopTier === "T5" ? 15000 : 0,
-    gathering: 50000000, healing: 200000, donations: 500, buildTime: 3600, destructionTime: 1800,
-    resourceAssistance: 1000000, behemothWins: 3, allianceHelp: 150,
-    recordedAt: new Date().toISOString(), createdAt: new Date().toISOString()
-  }, ...snapshots]);
-
-  if (applicant.preferredRole && ["FIGHTER", "SUPPORT", "FARM"].includes(applicant.preferredRole)) {
-    setOverrides([...overrides, {
-      id: `override_${Date.now()}`,
-      playerId: newCharacterId,
-      role: applicant.preferredRole as AccountRole,
-      reason: "Recruitment application — applicant self-selected preferred role.",
-      createdBy: "Recruitment Portal",
-      createdAt: new Date().toISOString()
-    }]);
-  }
-};
+    const newCharacterId = `p_rec_${Date.now()}`;
+    setPlayers([{ characterId: newCharacterId, currentName: applicant.characterName, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, ...players]);
+    
+    setSnapshots([{
+      id: `snap_${Date.now()}`, playerId: newCharacterId, playerName: applicant.characterName, allianceId: settings.allianceId, importId: "import_portal",
+      currentPower: applicant.power, highestPower: applicant.power, merits: applicant.merits,
+      t4Deaths: applicant.troopTier === "T5" ? 20000 : 10000, t5Deaths: applicant.troopTier === "T5" ? 15000 : 0,
+      gathering: 50000000, healing: 200000, donations: 500, buildTime: 3600, destructionTime: 1800,
+      resourceAssistance: 1000000, behemothWins: 3, allianceHelp: 150,
+      recordedAt: new Date().toISOString(), createdAt: new Date().toISOString()
+    }, ...snapshots]);
+  };
 
   // --- RENDER ---
   return (
@@ -313,6 +301,62 @@ export default function App() {
                 settings={settings}
                 onNavigateToTab={setActiveTab}
              />
+          )}
+
+          {activeTab === "roster" && (
+            <RosterTab
+              players={players}
+              snapshots={cumulativeSnapshots}
+              classifications={classifications}
+              evaluations={evaluations}
+              recommendations={recommendations}
+              importSessions={importSessions}
+              onSelectPlayer={(id) => { setSelectedPlayerId(id); setActiveTab("players"); }}
+              onNavigateToTab={setActiveTab}
+              settings={settings}
+            />
+          )}
+
+          {activeTab === "review" && (
+            <ReviewTab
+              players={players}
+              snapshots={cumulativeSnapshots}
+              classifications={classifications}
+              evaluations={evaluations}
+              recommendations={recommendations}
+              overrides={overrides}
+              onApplyOverride={handleApplyOverride}
+              onRemoveOverride={handleRemoveOverride}
+              onResolveRecommendation={handleResolveRecommendation}
+              onSelectPlayer={(id) => { setSelectedPlayerId(id); setActiveTab("players"); }}
+              onNavigateToTab={setActiveTab}
+              settings={settings}
+            />
+          )}
+
+          {activeTab === "warlogs" && (
+            <WarLogsTab
+              players={players}
+              onSelectPlayer={(id) => { setSelectedPlayerId(id); setActiveTab("players"); }}
+              onNavigateToTab={setActiveTab}
+            />
+          )}
+
+          {activeTab === "settings" && (
+            <SettingsTab
+              settings={settings}
+              onUpdateSettings={setSettings}
+              activeTheme={activeTheme}
+              onUpdateTheme={setActiveTheme}
+            />
+          )}
+
+          {activeTab === "member" && (
+            <MemberPortalTab
+              players={players}
+              snapshots={activeSnapshots}
+              settings={settings}
+            />
           )}
         </main>
       </div>

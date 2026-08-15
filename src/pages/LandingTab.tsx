@@ -16,7 +16,6 @@ interface LandingTabProps {
     power: number;
     merits: number;
     troopTier: string;
-    preferredRole: string;
   }) => void;
 }
 
