@@ -16,9 +16,8 @@
     "allowJs": true,
     "jsx": "react-jsx",
     "paths": {
-      "@/*": ["./*"],
-      "@/server/*": ["./server/*"],
-      "@/src/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@/server/*": ["./server/*"]
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
