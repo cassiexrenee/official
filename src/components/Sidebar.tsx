@@ -1,7 +1,7 @@
 import React from "react";
 import { 
   Home, LayoutDashboard, UserSquare2, TableProperties, Scroll, 
-  Sliders, Compass, Menu, X, ChevronLeft, ChevronRight, ShieldAlert
+  Sliders, Compass, Menu, X, ChevronLeft, ChevronRight, ShieldAlert, Target
 } from "lucide-react";
 
 interface CurrentUser {
@@ -51,6 +51,7 @@ export default function Sidebar({
     { id: "member", label: "Account Registry", icon: <UserSquare2 size={18} /> },
     { id: "roster", label: "Alliance Registry", icon: <TableProperties size={18} /> },
     { id: "review", label: "Officer Review", icon: <ShieldAlert size={18} /> },
+    { id: "mobilization", label: "Mobilization Track", icon: <Target size={18} /> },
     { id: "warlogs", label: "Alliance Chronicle", icon: <Scroll size={18} /> },
     { id: "settings", label: "Settings", icon: <Sliders size={18} /> }
   ];

@@ -7,7 +7,9 @@ import {
   RoleOverride,
   AccountRole,
   ImportSession,
-  RecommendationStatus
+  RecommendationStatus,
+  MobilizationEvent,
+  MobilizationEntry
 } from "./types";
 
 // Custom Hooks
@@ -29,10 +31,11 @@ import WarLogsTab from "./pages/WarLogsTab";
 import LandingTab from "./pages/LandingTab";
 import MemberPortalTab from "./pages/MemberPortalTab";
 import MigrationReconcilerTab from "./pages/MigrationReconcilerTab";
+import MobilizationTab from "./pages/MobilizationTab";
 
 import { AlertTriangle } from "lucide-react";
 
-const VALID_TABS = ["landing", "overview", "players", "member", "roster", "review", "warlogs", "settings"];
+const VALID_TABS = ["landing", "overview", "players", "member", "roster", "review", "mobilization", "warlogs", "settings"];
 
 function getDeepLinkParams(): { tab: string | null; player: string | null } {
   try {
@@ -110,6 +113,8 @@ export default function App() {
     overrides, setOverrides,
     notes, setNotes,
     settings, setSettings,
+    mobilizationEvents, setMobilizationEvents,
+    mobilizationEntries, setMobilizationEntries,
     backendStatusMessage, setBackendStatusMessage
   } = useAllianceState();
 
@@ -231,6 +236,16 @@ export default function App() {
     }, ...snapshots]);
   };
 
+  const handleSaveMobilization = (event: MobilizationEvent, entries: MobilizationEntry[]) => {
+    setMobilizationEvents([event, ...mobilizationEvents]);
+    setMobilizationEntries([...entries, ...mobilizationEntries]);
+  };
+
+  const handleDeleteMobilizationEvent = (eventId: string) => {
+    setMobilizationEvents(mobilizationEvents.filter((e) => e.id !== eventId));
+    setMobilizationEntries(mobilizationEntries.filter((e) => e.eventId !== eventId));
+  };
+
   // --- RENDER ---
   return (
     <div className="min-h-screen bg-gothic-void text-gothic-silver flex flex-col md:flex-row min-w-0">
@@ -331,6 +346,16 @@ export default function App() {
               onSelectPlayer={(id) => { setSelectedPlayerId(id); setActiveTab("players"); }}
               onNavigateToTab={setActiveTab}
               settings={settings}
+            />
+          )}
+
+          {activeTab === "mobilization" && (
+            <MobilizationTab
+              players={players}
+              mobilizationEvents={mobilizationEvents}
+              mobilizationEntries={mobilizationEntries}
+              onSaveMobilization={handleSaveMobilization}
+              onDeleteMobilizationEvent={handleDeleteMobilizationEvent}
             />
           )}
 

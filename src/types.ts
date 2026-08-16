@@ -325,3 +325,23 @@ export interface WarLogEntry {
   locationCoordinates?: string;
   recordedBy?: string;
 }
+
+export interface MobilizationEvent {
+  id: string;
+  name: string;
+  eventDate: string;
+  source: "OCR" | "Manual" | "Mixed";
+  createdAt: string;
+}
+
+export interface MobilizationEntry {
+  id: string;
+  eventId: string;
+  playerId: string | null;
+  rawName: string;
+  score: number;
+  questsSubmitted: number;
+  questsAccepted: number;
+  rank?: number;
+  createdAt: string;
+}

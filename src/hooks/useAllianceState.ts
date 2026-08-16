@@ -6,7 +6,9 @@ import {
   AllianceSettings, 
   PlayerNote, 
   RoleOverride,
-  ImportSession
+  ImportSession,
+  MobilizationEvent,
+  MobilizationEntry
 } from "../types";
 
 const initialImportSessions: ImportSession[] = [];
@@ -47,6 +49,8 @@ export function useAllianceState() {
   const [overrides, setOverrides] = useState<RoleOverride[]>([]);
   const [notes, setNotes] = useState<PlayerNote[]>([]);
   const [settings, setSettings] = useState<AllianceSettings>(defaultAllianceSettings);
+  const [mobilizationEvents, setMobilizationEvents] = useState<MobilizationEvent[]>([]);
+  const [mobilizationEntries, setMobilizationEntries] = useState<MobilizationEntry[]>([]);
   const [isLoadingState, setIsLoadingState] = useState(true);
   const [backendStatusMessage, setBackendStatusMessage] = useState<string | null>(null);
 
@@ -61,6 +65,8 @@ export function useAllianceState() {
       let loadedNotes: PlayerNote[] = [];
       let loadedSettings = defaultAllianceSettings;
       let loadedSessions = initialImportSessions;
+      let loadedMobEvents: MobilizationEvent[] = [];
+      let loadedMobEntries: MobilizationEntry[] = [];
 
       try {
         const response = await apiFetch("/api/state");
@@ -73,6 +79,8 @@ export function useAllianceState() {
           if (Array.isArray(state.overrides)) loadedOverrides = state.overrides;
           if (Array.isArray(state.notes)) loadedNotes = state.notes;
           if (Array.isArray(state.importSessions)) loadedSessions = state.importSessions;
+          if (Array.isArray(state.mobilizationEvents)) loadedMobEvents = state.mobilizationEvents;
+          if (Array.isArray(state.mobilizationEntries)) loadedMobEntries = state.mobilizationEntries;
           if (state.settings && typeof state.settings === "object") {
             loadedSettings = {
               ...defaultAllianceSettings,
@@ -134,6 +142,8 @@ export function useAllianceState() {
       setNotes(loadedNotes);
       setSettings(loadedSettings);
       setImportSessions(loadedSessions);
+      setMobilizationEvents(loadedMobEvents);
+      setMobilizationEntries(loadedMobEntries);
       setIsLoadingState(false);
     })();
 
@@ -151,7 +161,7 @@ export function useAllianceState() {
     stateSaveTimeoutRef.current = setTimeout(() => {
       apiFetch("/api/state", {
         method: "PUT",
-        body: JSON.stringify({ players, snapshots, overrides, notes, settings, importSessions })
+        body: JSON.stringify({ players, snapshots, overrides, notes, settings, importSessions, mobilizationEvents, mobilizationEntries })
       })
         .then((res) => {
           if (!res.ok) throw new Error(`Server responded with ${res.status}`);
@@ -166,7 +176,7 @@ export function useAllianceState() {
     return () => {
       if (stateSaveTimeoutRef.current) clearTimeout(stateSaveTimeoutRef.current);
     };
-  }, [players, snapshots, overrides, notes, settings, importSessions, isLoadingState]);
+  }, [players, snapshots, overrides, notes, settings, importSessions, mobilizationEvents, mobilizationEntries, isLoadingState]);
 
   return {
     players, setPlayers,
@@ -175,6 +185,8 @@ export function useAllianceState() {
     overrides, setOverrides,
     notes, setNotes,
     settings, setSettings,
+    mobilizationEvents, setMobilizationEvents,
+    mobilizationEntries, setMobilizationEntries,
     isLoadingState,
     backendStatusMessage, setBackendStatusMessage
   };
