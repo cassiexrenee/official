@@ -390,8 +390,6 @@ export default function App() {
         </main>
       </div>
     </div>
-  );
-}
 
 {activeTab === "import" && (
   <ImportTab
@@ -401,4 +399,7 @@ export default function App() {
     onRenameSession={handleRenameSession}
     snapshots={snapshots}
   />
-)}
+)
+}
+  );
+}
