@@ -387,19 +387,18 @@ export default function App() {
               settings={settings}
             />
           )}
+
+          {activeTab === "import" && (
+            <ImportTab
+              importSessions={importSessions}
+              onImportSnapshots={handleImportSnapshots}
+              onDeleteSession={handleDeleteSession}
+              onRenameSession={handleRenameSession}
+              snapshots={snapshots}
+            />
+          )}
         </main>
       </div>
     </div>
-
-{activeTab === "import" && (
-  <ImportTab
-    importSessions={importSessions}
-    onImportSnapshots={handleImportSnapshots}
-    onDeleteSession={handleDeleteSession}
-    onRenameSession={handleRenameSession}
-    snapshots={snapshots}
-  />
-)
-}
   );
 }
