@@ -35,7 +35,7 @@ import MobilizationTab from "./pages/MobilizationTab";
 
 import { AlertTriangle } from "lucide-react";
 
-const VALID_TABS = ["landing", "overview", "players", "member", "roster", "review", "mobilization", "warlogs", "settings"];
+const VALID_TABS = ["landing", "overview", "players", "member", "roster", "review", "mobilization", "import", "warlogs", "settings"];
 
 function getDeepLinkParams(): { tab: string | null; player: string | null } {
   try {
@@ -246,6 +246,10 @@ export default function App() {
     setMobilizationEntries(mobilizationEntries.filter((e) => e.eventId !== eventId));
   };
 
+  const handleRenameSession = (sessionId: string, newFilename: string) => {
+  setImportSessions(importSessions.map((s) => s.id === sessionId ? { ...s, filename: newFilename } : s));
+};
+
   // --- RENDER ---
   return (
     <div className="min-h-screen bg-gothic-void text-gothic-silver flex flex-col md:flex-row min-w-0">
@@ -388,3 +392,13 @@ export default function App() {
     </div>
   );
 }
+
+{activeTab === "import" && (
+  <ImportTab
+    importSessions={importSessions}
+    onImportSnapshots={handleImportSnapshots}
+    onDeleteSession={handleDeleteSession}
+    onRenameSession={handleRenameSession}
+    snapshots={snapshots}
+  />
+)}
