@@ -128,4 +128,119 @@ export default function Sidebar({
                   setIsMobileSidebarOpen(false);
                 }}
                 title={isSidebarCollapsed ? navItem.label : undefined}
-                className={
+                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg border transition-all cursor-pointer text-xs font-semibold uppercase tracking-[0.08em] ${
+                  isSidebarCollapsed ? "justify-center px-0" : ""
+                } ${
+                  isActive
+                    ? "text-[#F2F0E8] bg-[#2F3743] border-[#D4B26A] shadow-[0_0_12px_rgba(212,178,106,0.25)] font-bold"
+                    : "border-transparent text-[#C8CCD2]/70 hover:text-white hover:bg-[#2F3743]/50 hover:border-[#4B5563]/40"
+                }`}
+              >
+                <div className={`${isActive ? "text-[#D4B26A]" : "text-[#8B96A5]"}`}>
+                  {navItem.icon}
+                </div>
+                {!isSidebarCollapsed && (
+                  <span className="truncate">{navItem.label}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Profile Dropdown */}
+        <div className="p-3 border-t border-[#4B5563]/30 bg-[#16181D]/80 relative">
+          <button
+            onClick={() => setIsProfileOpen(!isProfileOpen)}
+            className={`w-full flex items-center gap-3 p-2 rounded-lg bg-[#16181D] border border-[#4B5563]/40 hover:border-[#D4B26A]/60 hover:bg-[#2F3743]/50 transition-all cursor-pointer text-left select-none group ${
+              isSidebarCollapsed ? "justify-center" : ""
+            }`}
+          >
+            {currentUser?.avatarUrl ? (
+              <img 
+                src={currentUser.avatarUrl} 
+                alt={profile.ingameName} 
+                referrerPolicy="no-referrer"
+                className="w-8 h-8 rounded-full border border-[#D4B26A]/60 shadow-[0_0_8px_rgba(212,178,106,0.3)] object-cover flex-shrink-0"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-[#2F3743] border border-[#D4B26A]/60 flex items-center justify-center text-xs font-display font-bold text-[#D4B26A] shadow-[0_0_8px_rgba(212,178,106,0.2)] flex-shrink-0">
+                {profile.ingameName.substring(0, 2).toUpperCase()}
+              </div>
+            )}
+            {!isSidebarCollapsed && (
+              <div className="overflow-hidden leading-tight flex-1">
+                <span className="block text-[9px] uppercase tracking-widest text-[#8B96A5] font-display">
+                  {profile.rank} OFFICER
+                </span>
+                <span className="text-xs font-bold text-[#F2F0E8] truncate block">
+                  {profile.ingameName}
+                </span>
+              </div>
+            )}
+          </button>
+
+          {isProfileOpen && (
+            <div className="absolute left-full bottom-3 ml-3 z-[100] w-80 bg-[#222831] border border-[#4B5563]/50 rounded-lg p-5 shadow-[0_10px_30px_rgba(0,0,0,0.8)] backdrop-blur-md">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#D4B26A] via-[#7FA8C9] to-[#B85A5A]" />
+              
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h4 className="text-xs uppercase tracking-widest font-display text-[#D4B26A] font-bold">Officer Credentials</h4>
+                </div>
+                <button 
+                  onClick={() => setIsProfileOpen(false)}
+                  className="text-xs text-[#C8CCD2]/60 hover:text-white cursor-pointer"
+                >✕</button>
+              </div>
+
+              <div className="space-y-3 bg-[#16181D]/80 border border-[#4B5563]/30 p-3.5 rounded mb-4">
+                <div className="space-y-1">
+                  <label className="block text-[9px] uppercase tracking-wider text-[#C8CCD2]/60">In-Game Name</label>
+                  <input
+                    type="text"
+                    value={profile.ingameName}
+                    onChange={(e) => setProfile({ ...profile, ingameName: e.target.value })}
+                    className="w-full bg-[#16181D] border border-[#4B5563]/40 rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#D4B26A]"
+                  />
+                </div>
+                
+                <div className="space-y-1">
+                  <label className="block text-[9px] uppercase tracking-wider text-[#C8CCD2]/60">Council Rank</label>
+                  <div className="flex gap-2">
+                    {(["R5", "R4"] as const).map((rank) => (
+                      <button
+                        key={rank}
+                        onClick={() => setProfile({ ...profile, rank })}
+                        className={`flex-1 py-1 text-xs font-bold rounded border cursor-pointer ${
+                          profile.rank === rank ? "bg-[#D4B26A]/20 border-[#D4B26A] text-[#D4B26A]" : "bg-[#16181D] border-[#4B5563]/30 text-[#C8CCD2]/60"
+                        }`}
+                      >
+                        {rank}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                {!currentUser ? (
+                  <button 
+                    onClick={handleLoginWithDiscord}
+                    className="w-full py-2 bg-[#5865F2] hover:bg-[#4752C4] text-white text-[10px] font-bold uppercase rounded border border-[#5865F2]/40 cursor-pointer"
+                  >
+                    Connect Discord
+                  </button>
+                ) : (
+                  <div className="flex justify-between items-center bg-[#5865F2]/10 p-2 rounded border border-[#5865F2]/30">
+                     <span className="text-xs text-white font-bold">{currentUser.username}</span>
+                     <button onClick={handleLogout} className="text-[10px] text-red-400 hover:text-red-300">Disconnect</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </aside>
+    </>
+  );
+}
