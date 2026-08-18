@@ -15,7 +15,7 @@ import {
 // Custom Hooks
 import { useAllianceState } from "./hooks/useAllianceState";
 import { useAnalytics } from "./hooks/useAnalytics";
-import { apiFetch, API_BASE } from "./apiConfig";
+import { apiFetch } from "./apiConfig";
 
 // Layout & Navigation
 import Sidebar from "./components/Sidebar";
@@ -67,9 +67,8 @@ export default function App() {
   // User Authentication State
   const [currentUser, setCurrentUser] = useState<{
     id: string;
-    username: string;
-    email?: string;
-    avatarUrl?: string;
+    email: string;
+    role: string;
   } | null>(null);
   
   // Sidebar UI State
@@ -134,32 +133,21 @@ export default function App() {
     apiFetch("/api/auth/logout", { method: "POST" }).catch(console.warn);
   };
 
-  const handleLoginWithDiscord = async () => {
+  const handleLogin = async (email: string, password: string): Promise<string | null> => {
     try {
-      const response = await apiFetch("/api/auth/discord/url");
-      if (!response.ok) throw new Error("Failed to get Discord URL");
-      const { url } = await response.json();
-      window.open(url, "discord_oauth_popup", "width=500,height=680");
+      const res = await apiFetch("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) return data.error || "Login failed.";
+      setCurrentUser(data.user);
+      return null;
     } catch (err) {
-      console.error("Error initiating Discord login:", err);
+      console.error("Login error:", err);
+      return "Network error while logging in.";
     }
   };
-
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      const expectedOrigin = API_BASE ? new URL(API_BASE).origin : window.location.origin;
-      if (event.origin !== expectedOrigin && !event.origin.includes("localhost")) return;
-
-      if (event.data?.type === "OAUTH_AUTH_SUCCESS" && event.data?.user) {
-        setCurrentUser(event.data.user);
-        setProfile((prev) => prev.ingameName === "Officer Sam" ? { ...prev, ingameName: event.data.user.username } : prev);
-        
-        handleAddNote("usr_officer_sam", `[Officer Sync] Command Officer "${event.data.user.username}" authenticated successfully via Discord.`);
-      }
-    };
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, []);
 
   useEffect(() => {
     apiFetch("/api/auth/session")
@@ -197,7 +185,6 @@ export default function App() {
   };
 
   const handleImportSnapshots = (newPlayers: Player[], newSnapshots: Snapshot[], sessions: ImportSession[]) => {
-    // Basic deduplication logic
     const uniquePlayersMap = new Map(players.map(p => [String(p.characterId).trim(), p]));
     newPlayers.forEach(np => {
       const cid = String(np.characterId).trim();
@@ -220,6 +207,10 @@ export default function App() {
     setImportSessions(importSessions.filter((s) => s.id !== sessionId));
     setSnapshots(updatedSnapshots);
     setPlayers(players.filter((p) => activePlayerIds.has(p.characterId)));
+  };
+
+  const handleRenameSession = (sessionId: string, newFilename: string) => {
+    setImportSessions(importSessions.map((s) => s.id === sessionId ? { ...s, filename: newFilename } : s));
   };
 
   const handleApplyForRecruitment = (applicant: Applicant) => {
@@ -246,10 +237,6 @@ export default function App() {
     setMobilizationEntries(mobilizationEntries.filter((e) => e.eventId !== eventId));
   };
 
-  const handleRenameSession = (sessionId: string, newFilename: string) => {
-  setImportSessions(importSessions.map((s) => s.id === sessionId ? { ...s, filename: newFilename } : s));
-};
-
   // --- RENDER ---
   return (
     <div className="min-h-screen bg-gothic-void text-gothic-silver flex flex-col md:flex-row min-w-0">
@@ -275,7 +262,7 @@ export default function App() {
         setIsSidebarCollapsed={setIsSidebarCollapsed}
         isProfileOpen={isProfileOpen}
         setIsProfileOpen={setIsProfileOpen}
-        handleLoginWithDiscord={handleLoginWithDiscord}
+        handleLogin={handleLogin}
         handleLogout={handleLogout}
         notesCount={notes.filter(n => n.authorId.includes(currentUser?.id || "---") || n.authorName.includes(profile.ingameName)).length}
       />
@@ -363,6 +350,16 @@ export default function App() {
             />
           )}
 
+          {activeTab === "import" && (
+            <ImportTab
+              importSessions={importSessions}
+              onImportSnapshots={handleImportSnapshots}
+              onDeleteSession={handleDeleteSession}
+              onRenameSession={handleRenameSession}
+              snapshots={snapshots}
+            />
+          )}
+
           {activeTab === "warlogs" && (
             <WarLogsTab
               players={players}
@@ -377,6 +374,7 @@ export default function App() {
               onUpdateSettings={setSettings}
               activeTheme={activeTheme}
               onUpdateTheme={setActiveTheme}
+              currentUser={currentUser}
             />
           )}
 
@@ -385,16 +383,6 @@ export default function App() {
               players={players}
               snapshots={activeSnapshots}
               settings={settings}
-            />
-          )}
-
-          {activeTab === "import" && (
-            <ImportTab
-              importSessions={importSessions}
-              onImportSnapshots={handleImportSnapshots}
-              onDeleteSession={handleDeleteSession}
-              onRenameSession={handleRenameSession}
-              snapshots={snapshots}
             />
           )}
         </main>

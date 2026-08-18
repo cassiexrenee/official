@@ -1,6 +1,7 @@
-import React, { useState } from "react";
-import { Save, CheckCircle, TrendingUp } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Save, CheckCircle, TrendingUp, Users, Trash2, Plus, ShieldCheck } from "lucide-react";
 import { AllianceSettings } from "@/types";
+import { apiFetch } from "@/apiConfig";
 import ThemeSettingsSection from "@/components/settings/ThemeSettingsSection";
 import SeasonSettingsSection from "@/components/settings/SeasonSettingsSection";
 
@@ -44,18 +45,27 @@ export const THEME_OPTIONS: ThemeOption[] = [
   }
 ];
 
+interface OfficerAccount {
+  id: string;
+  email: string;
+  role: string;
+  createdAt: string;
+}
+
 interface SettingsTabProps {
   settings: AllianceSettings;
   onUpdateSettings: (newSettings: AllianceSettings) => void;
   activeTheme?: string;
   onUpdateTheme?: (theme: string) => void;
+  currentUser?: { id: string; email: string; role: string } | null;
 }
 
 export default function SettingsTab({
   settings,
   onUpdateSettings,
   activeTheme = "obsidian",
-  onUpdateTheme
+  onUpdateTheme,
+  currentUser
 }: SettingsTabProps) {
   const [currentTheme, setCurrentTheme] = useState<string>(activeTheme);
   const [activeProfile, setActiveProfile] = useState(settings.activeProfile);
@@ -74,6 +84,70 @@ export default function SettingsTab({
   const [seasonSummaryDate, setSeasonSummaryDate] = useState(settings.configuration.seasonSummaryDate || "2026-07-29");
   const [seasonEndDate, setSeasonEndDate] = useState(settings.configuration.seasonEndDate || "2026-07-31");
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // --- Officer account management (admin only) ---
+  const [officers, setOfficers] = useState<OfficerAccount[]>([]);
+  const [newEmail, setNewEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newRole, setNewRole] = useState<"officer" | "admin">("officer");
+  const [officerError, setOfficerError] = useState<string | null>(null);
+  const [officerFeedback, setOfficerFeedback] = useState<string | null>(null);
+
+  const isAdmin = currentUser?.role === "admin";
+
+  const loadOfficers = () => {
+    apiFetch("/api/users")
+      .then((res) => res.json())
+      .then((data) => { if (Array.isArray(data.users)) setOfficers(data.users); })
+      .catch(console.warn);
+  };
+
+  useEffect(() => {
+    if (isAdmin) loadOfficers();
+  }, [isAdmin]);
+
+  const handleCreateOfficer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setOfficerError(null);
+    if (!newEmail.trim() || !newPassword) {
+      setOfficerError("Email and password are required.");
+      return;
+    }
+    try {
+      const res = await apiFetch("/api/users", {
+        method: "POST",
+        body: JSON.stringify({ email: newEmail.trim(), password: newPassword, role: newRole })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setOfficerError(data.error || "Failed to create account.");
+        return;
+      }
+      setOfficerFeedback(`✓ Account created for ${data.user.email}.`);
+      setTimeout(() => setOfficerFeedback(null), 6000);
+      setNewEmail("");
+      setNewPassword("");
+      setNewRole("officer");
+      loadOfficers();
+    } catch (err) {
+      setOfficerError("Network error while creating account.");
+    }
+  };
+
+  const handleDeleteOfficer = async (id: string) => {
+    if (!confirm("Remove this account? They will no longer be able to log in.")) return;
+    try {
+      const res = await apiFetch(`/api/users/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) {
+        setOfficerError(data.error || "Failed to delete account.");
+        return;
+      }
+      loadOfficers();
+    } catch (err) {
+      setOfficerError("Network error while deleting account.");
+    }
+  };
 
   const addDays = (dateStr: string, days: number): string => {
     try {
@@ -238,6 +312,85 @@ export default function SettingsTab({
             </div>
           </div>
         </div>
+
+        {isAdmin && (
+          <div className="p-6 rounded-xl bg-gothic-velvet border border-gothic-silver/20 space-y-5">
+            <h2 className="text-base font-bold text-gothic-silver font-display flex items-center gap-2 border-b border-gothic-silver/20 pb-3">
+              <ShieldCheck size={18} className="text-[#D4B26A]" />
+              Officer Account Management
+            </h2>
+            <p className="text-xs text-gothic-rose/70 font-mono -mt-2">
+              Create and manage login credentials for alliance officers. Admin-only.
+            </p>
+
+            {officerFeedback && (
+              <div className="p-3 rounded-lg bg-emerald-950/20 border border-emerald-500/20 text-emerald-300 text-xs font-mono">
+                {officerFeedback}
+              </div>
+            )}
+            {officerError && (
+              <div className="p-3 rounded-lg bg-red-950/20 border border-red-500/30 text-red-300 text-xs font-mono">
+                {officerError}
+              </div>
+            )}
+
+            <form onSubmit={handleCreateOfficer} className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <input
+                type="email"
+                required
+                placeholder="officer@example.com"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                className="sm:col-span-2 bg-gothic-ink border border-gothic-silver/20 text-xs text-gothic-silver p-2.5 rounded-lg outline-none font-mono"
+              />
+              <input
+                type="password"
+                required
+                placeholder="Password (min 8 chars)"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="bg-gothic-ink border border-gothic-silver/20 text-xs text-gothic-silver p-2.5 rounded-lg outline-none font-mono"
+              />
+              <select
+                value={newRole}
+                onChange={(e) => setNewRole(e.target.value as "officer" | "admin")}
+                className="bg-gothic-ink border border-gothic-silver/20 text-xs text-gothic-silver p-2.5 rounded-lg outline-none cursor-pointer font-mono"
+              >
+                <option value="officer">Officer</option>
+                <option value="admin">Admin</option>
+              </select>
+              <button
+                type="submit"
+                className="sm:col-span-4 py-2.5 bg-gothic-silver hover:bg-white text-[#111113] font-bold text-xs rounded-lg flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Plus size={14} /> Create Account
+              </button>
+            </form>
+
+            <div className="space-y-2">
+              {officers.length === 0 ? (
+                <p className="text-xs text-gothic-rose/50 font-mono text-center py-4">No accounts found.</p>
+              ) : (
+                officers.map((o) => (
+                  <div key={o.id} className="p-3 rounded-lg bg-gothic-ink border border-gothic-silver/15 flex items-center justify-between text-xs font-mono">
+                    <div className="flex items-center gap-2">
+                      <Users size={13} className="text-[#89A6B8]" />
+                      <span className="text-gothic-silver font-semibold">{o.email}</span>
+                      <span className="text-[9px] uppercase text-amber-300 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">{o.role}</span>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteOfficer(o.id)}
+                      className="text-red-400 hover:text-red-300 cursor-pointer p-1"
+                      title="Remove account"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

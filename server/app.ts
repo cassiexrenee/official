@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import { authRouter } from "./routes/auth";
 import { stateRouter } from "./routes/state";
 import { rosterRouter } from "./routes/roster";
-import { aiRouter } from "./routes/ai";
+import { usersRouter } from "./routes/users";
 
 dotenv.config();
 
@@ -17,7 +17,7 @@ app.use(express.json());
 app.use("/api/auth", authRouter);
 app.use("/api/state", stateRouter);
 app.use("/api/roster", rosterRouter); // Use for both /claims and /farms
-app.use("/api/ai", aiRouter);
+app.use("/api/users", usersRouter);
 
 // Basic health check endpoint
 app.get("/api/health", (req, res) => {

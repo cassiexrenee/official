@@ -1,14 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { 
   Home, LayoutDashboard, UserSquare2, TableProperties, Scroll, 
-  Sliders, Compass, Menu, X, ChevronLeft, ChevronRight, ShieldAlert, Target, Upload
+  Sliders, Compass, Menu, X, ChevronLeft, ChevronRight, ShieldAlert, Target, Upload, LogIn
 } from "lucide-react";
 
 interface CurrentUser {
   id: string;
-  username: string;
-  email?: string;
-  avatarUrl?: string;
+  email: string;
+  role: string;
 }
 
 interface UserProfile {
@@ -29,7 +28,7 @@ interface SidebarProps {
   setIsSidebarCollapsed: (isCollapsed: boolean) => void;
   isProfileOpen: boolean;
   setIsProfileOpen: (isOpen: boolean) => void;
-  handleLoginWithDiscord: () => void;
+  handleLogin: (email: string, password: string) => Promise<string | null>;
   handleLogout: () => void;
   notesCount: number;
 }
@@ -41,10 +40,15 @@ export default function Sidebar({
   isMobileSidebarOpen, setIsMobileSidebarOpen,
   isSidebarCollapsed, setIsSidebarCollapsed,
   isProfileOpen, setIsProfileOpen,
-  handleLoginWithDiscord, handleLogout,
+  handleLogin, handleLogout,
   notesCount
 }: SidebarProps) {
-  
+
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
   const navItems = [
     { id: "landing", label: "Council Hall", icon: <Home size={18} /> },
     { id: "overview", label: "Leadership Hub", icon: <LayoutDashboard size={18} /> },
@@ -56,6 +60,20 @@ export default function Sidebar({
     { id: "warlogs", label: "Alliance Chronicle", icon: <Scroll size={18} /> },
     { id: "settings", label: "Settings", icon: <Sliders size={18} /> }
   ];
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError(null);
+    setIsLoggingIn(true);
+    const error = await handleLogin(loginEmail, loginPassword);
+    setIsLoggingIn(false);
+    if (error) {
+      setLoginError(error);
+    } else {
+      setLoginEmail("");
+      setLoginPassword("");
+    }
+  };
 
   return (
     <>
@@ -147,7 +165,7 @@ export default function Sidebar({
           })}
         </div>
 
-        {/* Profile Dropdown */}
+        {/* Profile / Login Dropdown */}
         <div className="p-3 border-t border-[#4B5563]/30 bg-[#16181D]/80 relative">
           <button
             onClick={() => setIsProfileOpen(!isProfileOpen)}
@@ -155,26 +173,23 @@ export default function Sidebar({
               isSidebarCollapsed ? "justify-center" : ""
             }`}
           >
-            {currentUser?.avatarUrl ? (
-              <img 
-                src={currentUser.avatarUrl} 
-                alt={profile.ingameName} 
-                referrerPolicy="no-referrer"
-                className="w-8 h-8 rounded-full border border-[#D4B26A]/60 shadow-[0_0_8px_rgba(212,178,106,0.3)] object-cover flex-shrink-0"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-[#2F3743] border border-[#D4B26A]/60 flex items-center justify-center text-xs font-display font-bold text-[#D4B26A] shadow-[0_0_8px_rgba(212,178,106,0.2)] flex-shrink-0">
-                {profile.ingameName.substring(0, 2).toUpperCase()}
-              </div>
-            )}
+            <div className="w-8 h-8 rounded-full bg-[#2F3743] border border-[#D4B26A]/60 flex items-center justify-center text-xs font-display font-bold text-[#D4B26A] shadow-[0_0_8px_rgba(212,178,106,0.2)] flex-shrink-0">
+              {currentUser ? currentUser.email.substring(0, 2).toUpperCase() : <LogIn size={14} />}
+            </div>
             {!isSidebarCollapsed && (
               <div className="overflow-hidden leading-tight flex-1">
-                <span className="block text-[9px] uppercase tracking-widest text-[#8B96A5] font-display">
-                  {profile.rank} OFFICER
-                </span>
-                <span className="text-xs font-bold text-[#F2F0E8] truncate block">
-                  {profile.ingameName}
-                </span>
+                {currentUser ? (
+                  <>
+                    <span className="block text-[9px] uppercase tracking-widest text-[#8B96A5] font-display">
+                      {currentUser.role}
+                    </span>
+                    <span className="text-xs font-bold text-[#F2F0E8] truncate block">
+                      {currentUser.email}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-xs font-bold text-[#F2F0E8] truncate block">Sign In</span>
+                )}
               </div>
             )}
           </button>
@@ -185,7 +200,9 @@ export default function Sidebar({
               
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h4 className="text-xs uppercase tracking-widest font-display text-[#D4B26A] font-bold">Officer Credentials</h4>
+                  <h4 className="text-xs uppercase tracking-widest font-display text-[#D4B26A] font-bold">
+                    {currentUser ? "Officer Credentials" : "Sign In"}
+                  </h4>
                 </div>
                 <button 
                   onClick={() => setIsProfileOpen(false)}
@@ -193,50 +210,76 @@ export default function Sidebar({
                 >✕</button>
               </div>
 
-              <div className="space-y-3 bg-[#16181D]/80 border border-[#4B5563]/30 p-3.5 rounded mb-4">
-                <div className="space-y-1">
-                  <label className="block text-[9px] uppercase tracking-wider text-[#C8CCD2]/60">In-Game Name</label>
-                  <input
-                    type="text"
-                    value={profile.ingameName}
-                    onChange={(e) => setProfile({ ...profile, ingameName: e.target.value })}
-                    className="w-full bg-[#16181D] border border-[#4B5563]/40 rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#D4B26A]"
-                  />
-                </div>
-                
-                <div className="space-y-1">
-                  <label className="block text-[9px] uppercase tracking-wider text-[#C8CCD2]/60">Council Rank</label>
-                  <div className="flex gap-2">
-                    {(["R5", "R4"] as const).map((rank) => (
-                      <button
-                        key={rank}
-                        onClick={() => setProfile({ ...profile, rank })}
-                        className={`flex-1 py-1 text-xs font-bold rounded border cursor-pointer ${
-                          profile.rank === rank ? "bg-[#D4B26A]/20 border-[#D4B26A] text-[#D4B26A]" : "bg-[#16181D] border-[#4B5563]/30 text-[#C8CCD2]/60"
-                        }`}
-                      >
-                        {rank}
-                      </button>
-                    ))}
+              {currentUser ? (
+                <>
+                  <div className="space-y-3 bg-[#16181D]/80 border border-[#4B5563]/30 p-3.5 rounded mb-4">
+                    <div className="space-y-1">
+                      <label className="block text-[9px] uppercase tracking-wider text-[#C8CCD2]/60">In-Game Name</label>
+                      <input
+                        type="text"
+                        value={profile.ingameName}
+                        onChange={(e) => setProfile({ ...profile, ingameName: e.target.value })}
+                        className="w-full bg-[#16181D] border border-[#4B5563]/40 rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#D4B26A]"
+                      />
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <label className="block text-[9px] uppercase tracking-wider text-[#C8CCD2]/60">Council Rank</label>
+                      <div className="flex gap-2">
+                        {(["R5", "R4"] as const).map((rank) => (
+                          <button
+                            key={rank}
+                            onClick={() => setProfile({ ...profile, rank })}
+                            className={`flex-1 py-1 text-xs font-bold rounded border cursor-pointer ${
+                              profile.rank === rank ? "bg-[#D4B26A]/20 border-[#D4B26A] text-[#D4B26A]" : "bg-[#16181D] border-[#4B5563]/30 text-[#C8CCD2]/60"
+                            }`}
+                          >
+                            {rank}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              <div className="mb-4">
-                {!currentUser ? (
-                  <button 
-                    onClick={handleLoginWithDiscord}
-                    className="w-full py-2 bg-[#5865F2] hover:bg-[#4752C4] text-white text-[10px] font-bold uppercase rounded border border-[#5865F2]/40 cursor-pointer"
-                  >
-                    Connect Discord
-                  </button>
-                ) : (
                   <div className="flex justify-between items-center bg-[#5865F2]/10 p-2 rounded border border-[#5865F2]/30">
-                     <span className="text-xs text-white font-bold">{currentUser.username}</span>
-                     <button onClick={handleLogout} className="text-[10px] text-red-400 hover:text-red-300">Disconnect</button>
+                    <span className="text-xs text-white font-bold truncate">{currentUser.email}</span>
+                    <button onClick={handleLogout} className="text-[10px] text-red-400 hover:text-red-300 shrink-0 ml-2 cursor-pointer">Sign Out</button>
                   </div>
-                )}
-              </div>
+                </>
+              ) : (
+                <form onSubmit={handleLoginSubmit} className="space-y-3">
+                  <div className="space-y-1">
+                    <label className="block text-[9px] uppercase tracking-wider text-[#C8CCD2]/60">Email</label>
+                    <input
+                      type="email"
+                      required
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      className="w-full bg-[#16181D] border border-[#4B5563]/40 rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#D4B26A]"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-[9px] uppercase tracking-wider text-[#C8CCD2]/60">Password</label>
+                    <input
+                      type="password"
+                      required
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      className="w-full bg-[#16181D] border border-[#4B5563]/40 rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#D4B26A]"
+                    />
+                  </div>
+                  {loginError && (
+                    <p className="text-[10px] text-red-400 font-mono">{loginError}</p>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={isLoggingIn}
+                    className="w-full py-2 bg-[#D4B26A] hover:bg-[#c3a159] disabled:opacity-50 text-[#16181D] text-[10px] font-bold uppercase rounded border border-[#D4B26A]/40 cursor-pointer"
+                  >
+                    {isLoggingIn ? "Signing In..." : "Sign In"}
+                  </button>
+                </form>
+              )}
             </div>
           )}
         </div>
