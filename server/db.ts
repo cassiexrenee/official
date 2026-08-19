@@ -2,16 +2,12 @@ import pg from "pg";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
+import bcrypt from "bcryptjs";
 
 let Database: any = null;
 
 // ---------------------------------------------------------------------------
 // Hybrid Persistence Layer (Neon PostgreSQL + SQLite Fallback)
-//
-// Automatically detects Neon PostgreSQL via DATABASE_URL / NEON_DATABASE_URL /
-// POSTGRES_URL environment variables. If a PostgreSQL connection string is
-// present (e.g. on Vercel or Render with Neon DB), queries are routed to Neon.
-// If absent, falls back to a local SQLite database for zero-config local / dev use.
 // ---------------------------------------------------------------------------
 
 const dbUrl = process.env.DATABASE_URL || process.env.NEON_DATABASE_URL || process.env.POSTGRES_URL;
@@ -60,12 +56,22 @@ export async function initDb(): Promise<void> {
 
           CREATE TABLE IF NOT EXISTS sessions (
             token TEXT PRIMARY KEY,
-            discord_id TEXT NOT NULL,
+            discord_id TEXT,
             username TEXT NOT NULL,
             email TEXT,
             avatar_url TEXT,
+            user_id TEXT,
+            role TEXT,
             created_at TIMESTAMPTZ NOT NULL,
             expires_at TIMESTAMPTZ NOT NULL
+          );
+
+          CREATE TABLE IF NOT EXISTS users (
+            id TEXT PRIMARY KEY,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'officer',
+            created_at TIMESTAMPTZ NOT NULL
           );
 
           CREATE TABLE IF NOT EXISTS player_claims (
@@ -84,6 +90,10 @@ export async function initDb(): Promise<void> {
 
           CREATE INDEX IF NOT EXISTS idx_farm_links_main_player ON farm_links(main_player_id);
           CREATE UNIQUE INDEX IF NOT EXISTS idx_claims_character ON player_claims(character_id);
+
+          ALTER TABLE sessions ALTER COLUMN discord_id DROP NOT NULL;
+          ALTER TABLE sessions ADD COLUMN IF NOT EXISTS user_id TEXT;
+          ALTER TABLE sessions ADD COLUMN IF NOT EXISTS role TEXT;
         `);
       } finally {
         client.release();
@@ -98,12 +108,22 @@ export async function initDb(): Promise<void> {
 
         CREATE TABLE IF NOT EXISTS sessions (
           token TEXT PRIMARY KEY,
-          discord_id TEXT NOT NULL,
+          discord_id TEXT,
           username TEXT NOT NULL,
           email TEXT,
           avatar_url TEXT,
+          user_id TEXT,
+          role TEXT,
           created_at TEXT NOT NULL,
           expires_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS users (
+          id TEXT PRIMARY KEY,
+          email TEXT UNIQUE NOT NULL,
+          password_hash TEXT NOT NULL,
+          role TEXT NOT NULL DEFAULT 'officer',
+          created_at TEXT NOT NULL
         );
 
         CREATE TABLE IF NOT EXISTS player_claims (
@@ -128,8 +148,10 @@ export async function initDb(): Promise<void> {
   return initPromise;
 }
 
-// Fire init immediately
-initDb().catch((err) => console.error("DB Initialization error:", err));
+// Fire init immediately, then seed the initial admin account
+initDb()
+  .then(() => seedAdminUser())
+  .catch((err) => console.error("DB Initialization error:", err));
 
 // --- Alliance state blob -----------------------------------------------
 
@@ -173,13 +195,120 @@ export async function saveAppState(state: unknown): Promise<void> {
   }
 }
 
+// --- Users (email/password accounts) ----------------------------------
+
+export interface AppUser {
+  id: string;
+  email: string;
+  role: "admin" | "officer";
+  createdAt: string;
+}
+
+export async function createUser(email: string, password: string, role: "admin" | "officer" = "officer"): Promise<AppUser> {
+  await initDb();
+  const id = `user_${crypto.randomBytes(8).toString("hex")}`;
+  const normalizedEmail = email.trim().toLowerCase();
+  const passwordHash = await bcrypt.hash(password, 10);
+  const createdAt = new Date().toISOString();
+
+  if (isPostgres && pgPool) {
+    await pgPool.query(
+      `INSERT INTO users (id, email, password_hash, role, created_at) VALUES ($1, $2, $3, $4, $5)`,
+      [id, normalizedEmail, passwordHash, role, createdAt]
+    );
+  } else if (sqliteDb) {
+    sqliteDb.prepare(
+      `INSERT INTO users (id, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?)`
+    ).run(id, normalizedEmail, passwordHash, role, createdAt);
+  }
+
+  return { id, email: normalizedEmail, role, createdAt };
+}
+
+export async function verifyUserPassword(email: string, password: string): Promise<AppUser | null> {
+  await initDb();
+  const normalizedEmail = email.trim().toLowerCase();
+  let row: any = null;
+
+  if (isPostgres && pgPool) {
+    const res = await pgPool.query("SELECT * FROM users WHERE email = $1", [normalizedEmail]);
+    row = res.rows[0];
+  } else if (sqliteDb) {
+    row = sqliteDb.prepare("SELECT * FROM users WHERE email = ?").get(normalizedEmail);
+  }
+
+  if (!row) return null;
+  const matches = await bcrypt.compare(password, row.password_hash);
+  if (!matches) return null;
+
+  return { id: row.id, email: row.email, role: row.role, createdAt: row.created_at };
+}
+
+export async function getUserById(id: string): Promise<AppUser | null> {
+  await initDb();
+  if (isPostgres && pgPool) {
+    const res = await pgPool.query("SELECT id, email, role, created_at FROM users WHERE id = $1", [id]);
+    const r = res.rows[0];
+    return r ? { id: r.id, email: r.email, role: r.role, createdAt: r.created_at } : null;
+  } else if (sqliteDb) {
+    const r = sqliteDb.prepare("SELECT id, email, role, created_at FROM users WHERE id = ?").get(id) as any;
+    return r ? { id: r.id, email: r.email, role: r.role, createdAt: r.created_at } : null;
+  }
+  return null;
+}
+
+export async function listUsers(): Promise<AppUser[]> {
+  await initDb();
+  if (isPostgres && pgPool) {
+    const res = await pgPool.query("SELECT id, email, role, created_at FROM users ORDER BY created_at ASC");
+    return res.rows.map((r) => ({ id: r.id, email: r.email, role: r.role, createdAt: r.created_at }));
+  } else if (sqliteDb) {
+    const rows = sqliteDb.prepare("SELECT id, email, role, created_at FROM users ORDER BY created_at ASC").all() as any[];
+    return rows.map((r) => ({ id: r.id, email: r.email, role: r.role, createdAt: r.created_at }));
+  }
+  return [];
+}
+
+export async function deleteUser(id: string): Promise<void> {
+  await initDb();
+  if (isPostgres && pgPool) {
+    await pgPool.query("DELETE FROM users WHERE id = $1", [id]);
+  } else if (sqliteDb) {
+    sqliteDb.prepare("DELETE FROM users WHERE id = ?").run(id);
+  }
+}
+
+export async function countAdmins(): Promise<number> {
+  await initDb();
+  if (isPostgres && pgPool) {
+    const res = await pgPool.query("SELECT COUNT(*) FROM users WHERE role = 'admin'");
+    return parseInt(res.rows[0].count, 10);
+  } else if (sqliteDb) {
+    const row = sqliteDb.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'admin'").get() as any;
+    return row.count;
+  }
+  return 0;
+}
+
+export async function seedAdminUser(): Promise<void> {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (!adminEmail || !adminPassword) {
+    console.warn("ADMIN_EMAIL / ADMIN_PASSWORD not set — skipping admin seed. Set both env vars to create the initial admin login.");
+    return;
+  }
+  const existingAdmins = await countAdmins();
+  if (existingAdmins > 0) return;
+  await createUser(adminEmail, adminPassword, "admin");
+  console.log(`Seeded initial admin user: ${adminEmail}`);
+}
+
 // --- Sessions -------------------------------------------------------------
 
 export interface SessionUser {
-  discordId: string;
-  username: string;
-  email?: string;
-  avatarUrl?: string;
+  userId: string;
+  email: string;
+  role: string;
 }
 
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -192,15 +321,15 @@ export async function createSession(user: SessionUser): Promise<{ token: string;
 
   if (isPostgres && pgPool) {
     await pgPool.query(
-      `INSERT INTO sessions (token, discord_id, username, email, avatar_url, created_at, expires_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [token, user.discordId, user.username, user.email || null, user.avatarUrl || null, now.toISOString(), expiresAt.toISOString()]
+      `INSERT INTO sessions (token, discord_id, username, email, avatar_url, user_id, role, created_at, expires_at)
+       VALUES ($1, NULL, $2, $2, NULL, $3, $4, $5, $6)`,
+      [token, user.email, user.userId, user.role, now.toISOString(), expiresAt.toISOString()]
     );
   } else if (sqliteDb) {
     sqliteDb.prepare(`
-      INSERT INTO sessions (token, discord_id, username, email, avatar_url, created_at, expires_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(token, user.discordId, user.username, user.email || null, user.avatarUrl || null, now.toISOString(), expiresAt.toISOString());
+      INSERT INTO sessions (token, discord_id, username, email, avatar_url, user_id, role, created_at, expires_at)
+      VALUES (?, NULL, ?, ?, NULL, ?, ?, ?, ?)
+    `).run(token, user.email, user.email, user.userId, user.role, now.toISOString(), expiresAt.toISOString());
   }
 
   return { token, expiresAt: expiresAt.toISOString() };
@@ -218,12 +347,7 @@ export async function getSession(token: string | undefined | null): Promise<Sess
       await pgPool.query("DELETE FROM sessions WHERE token = $1", [token]);
       return null;
     }
-    return {
-      discordId: row.discord_id,
-      username: row.username,
-      email: row.email || undefined,
-      avatarUrl: row.avatar_url || undefined
-    };
+    return { userId: row.user_id, email: row.email, role: row.role };
   } else if (sqliteDb) {
     const row = sqliteDb.prepare("SELECT * FROM sessions WHERE token = ?").get(token) as any;
     if (!row) return null;
@@ -231,12 +355,7 @@ export async function getSession(token: string | undefined | null): Promise<Sess
       sqliteDb.prepare("DELETE FROM sessions WHERE token = ?").run(token);
       return null;
     }
-    return {
-      discordId: row.discord_id,
-      username: row.username,
-      email: row.email || undefined,
-      avatarUrl: row.avatar_url || undefined
-    };
+    return { userId: row.user_id, email: row.email, role: row.role };
   }
   return null;
 }
@@ -398,6 +517,13 @@ export default {
   initDb,
   getAppState,
   saveAppState,
+  createUser,
+  verifyUserPassword,
+  getUserById,
+  listUsers,
+  deleteUser,
+  countAdmins,
+  seedAdminUser,
   createSession,
   getSession,
   deleteSession,
